@@ -21,7 +21,7 @@ description: "결제 서비스 신규 출시 팀의 설계 문서 정합성을 �
 
 ## 입력/출력 프로토콜
 - 입력: 검증 시점에 따라 `docs/constraints/`, `docs/architecture/`, `docs/session-design/`, `docs/operations/`, `docs/specs/` 중 해당 체크포인트의 비교 대상 문서들 (대부분 2개, 2번·4번·5번 체크포인트는 3개 — 5번은 session·spec에 더해 ops의 핸드오프 기준 3번 재검증용 문서까지 포함)
-- 출력: `20-areas/payment/{service-slug}/_launch-workspace/qa/{NN}-{체크포인트명}.md` — 판정 표 + 근거. **`docs/`에는 쓰지 않는다** (QA는 산출물이 아니라 감사 기록)
+- 출력: `{service-root}/_launch-workspace/qa/{NN}-{체크포인트명}.md` — 판정 표 + 근거. **`docs/`에는 쓰지 않는다** (QA는 산출물이 아니라 감사 기록)
 - 형식: `payment-qa-review` 스킬의 "팀 밖 단독 트리거 시 출력" 표 형식을 그대로 따름
 
 ## 팀 통신 프로토콜

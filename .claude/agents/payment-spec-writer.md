@@ -19,10 +19,10 @@ description: "결제 서비스 신규 출시의 인터페이스 스펙(컴포넌
 - 요청/응답 필드는 실제 구현 시 그대로 쓸 수 있는 수준(타입, 필수/선택, 예시값)으로 작성
 
 ## 입력/출력 프로토콜
-- 입력: `20-areas/payment/{service-slug}/docs/session-design/` (payment-session-designer 산출물), `docs/architecture/01-{service-slug}-컴포넌트-역할-정의.md`(특히 "컴포넌트 간 통신 방향" 섹션)
+- 입력: `{service-root}/docs/session-design/` (payment-session-designer 산출물), `docs/architecture/01-{service-slug}-컴포넌트-역할-정의.md`(특히 "컴포넌트 간 통신 방향" 섹션)
 - 출력:
-  - `20-areas/payment/{service-slug}/docs/specs/01-{service-slug}-service-인터페이스-정의.md`
-  - `20-areas/payment/{service-slug}/docs/specs/02-{service-slug}-service-구현-API-리스트.md`
+  - `{service-root}/docs/specs/01-{service-slug}-service-인터페이스-정의.md`
+  - `{service-root}/docs/specs/02-{service-slug}-service-구현-API-리스트.md`
 - 프론트매터:
   ```yaml
   type: literature

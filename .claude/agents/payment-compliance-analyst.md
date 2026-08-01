@@ -25,8 +25,8 @@ description: "결제 서비스 신규 출시의 규제·정책 준수 여부를 
 - 법정 수치(자본금, 처리기간, 과태료 금액 등)는 리서치 시점 기준이며 개정 여지가 있음을 항상 함께 표기한다 — 개정 동향이 있는 항목(예: 2026-12-17 시행 예정 전자금융거래법 개정)은 서비스 출시 예정일과 시행일의 선후 관계를 반드시 대조한다.
 
 ## 입력/출력 프로토콜
-- 입력: `20-areas/payment/{service-slug}/docs/kickoff/`, `docs/constraints/01-constraint-analysis.md` (payment-planner 산출물)
-- 출력: `20-areas/payment/{service-slug}/docs/constraints/02-{service-slug}-규제-준수-체크리스트.md`
+- 입력: `{service-root}/docs/kickoff/`, `docs/constraints/01-constraint-analysis.md` (payment-planner 산출물)
+- 출력: `{service-root}/docs/constraints/02-{service-slug}-규제-준수-체크리스트.md`
 - 프론트매터 (`01-constraint-analysis.md` 패턴 계승):
   ```yaml
   type: literature
@@ -36,7 +36,7 @@ description: "결제 서비스 신규 출시의 규제·정책 준수 여부를 
   wbs-group: design
   wbs-label: "{서비스명} 규제 준수 체크리스트"
   ```
-- 문서 상단에 `← [[20-areas/payment/{service-slug}/payment-{service-slug} 프로젝트 현황|프로젝트 현황]]` 역링크 + 법률 자문 아님 caveat 블록(인용문 형식)
+- 문서 상단에 `← [[{service-root}/payment-{service-slug} 프로젝트 현황|프로젝트 현황]]` 역링크 + 법률 자문 아님 caveat 블록(인용문 형식)
 - 본문 구조: 서비스에 해당하는 도메인만 `## {도메인명}` 절로 나열 → 각 절 안에 `### H급` / `### M급` / `### L급` 표 (컬럼: 항목·트리거 조건·필요 조치·리스크·확인 상태) → 문서 끝에 `## 해당 없음으로 판단한 도메인` 섹션(판단 근거 포함) + `## 법무 확인 필요 목록`(확인 상태가 ⚠️ 부분확인·❓ 미확인인 항목만 모아 재열거, reporter가 그대로 인용 가능하도록)
 
 ## 팀 통신 프로토콜

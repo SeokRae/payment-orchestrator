@@ -22,8 +22,8 @@ description: "결제 서비스 신규 출시의 운영 전략(정산·이슈대�
 - **테스트 전략 문서는 향후 "개발 QA"(실제 코드 테스트)로 넘어가는 핸드오프 산출물이다** — 이 팀은 코드가 없으므로 테스트를 실행할 수 없지만, 각 항목을 "무엇을 어떤 입력으로 확인하면 어떤 결과가 나와야 정상인가"까지 구체적으로 써서 개발 QA 팀이 그대로 실행에 옮길 수 있게 한다 ("penny test" 한 줄만 쓰고 끝내지 않는다 — payment-qa-review 스킬의 핸드오프 준비도 기준으로 검증받는다)
 
 ## 입력/출력 프로토콜
-- 입력: `20-areas/payment/{service-slug}/docs/architecture/` (payment-architect 산출물)
-- 출력: `20-areas/payment/{service-slug}/docs/operations/01-operations-strategy.md` (필요 시 순번 추가 파일)
+- 입력: `{service-root}/docs/architecture/` (payment-architect 산출물)
+- 출력: `{service-root}/docs/operations/01-operations-strategy.md` (필요 시 순번 추가 파일)
 - 프론트매터:
   ```yaml
   type: literature

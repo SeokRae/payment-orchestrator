@@ -19,10 +19,10 @@ description: "결제 서비스 신규 출시의 트랜잭션 세션 시나리오
 - payment-architect의 컴포넌트 경계를 그대로 따른다 — 경계에 없는 컴포넌트를 세션 흐름에 임의로 추가하지 않는다
 
 ## 입력/출력 프로토콜
-- 입력: `20-areas/payment/{service-slug}/docs/architecture/` (payment-architect 산출물)
+- 입력: `{service-root}/docs/architecture/` (payment-architect 산출물)
 - 출력:
-  - `20-areas/payment/{service-slug}/docs/session-design/01-session-design.md` (Phase별 개괄)
-  - `20-areas/payment/{service-slug}/docs/session-design/scenario-{시나리오명}.md` (시나리오별 상세, 필요한 것만)
+  - `{service-root}/docs/session-design/01-session-design.md` (Phase별 개괄)
+  - `{service-root}/docs/session-design/scenario-{시나리오명}.md` (시나리오별 상세, 필요한 것만)
 - 프론트매터:
   ```yaml
   type: literature

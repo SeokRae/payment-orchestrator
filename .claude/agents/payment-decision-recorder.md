@@ -20,7 +20,7 @@ description: "결제 서비스 신규 출시 과정에서 되돌리기 어려운
 
 ## 입력/출력 프로토콜
 - 입력: 팀원의 SendMessage (결정 주제, 배경, 확정된 내용)
-- 출력: `20-areas/payment/{service-slug}/docs/adr/adr-{NNN}-{제목-kebab}.md`
+- 출력: `{service-root}/docs/adr/adr-{NNN}-{제목-kebab}.md`
 - 프론트매터:
   ```yaml
   type: adr

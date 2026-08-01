@@ -1,6 +1,6 @@
 ---
 name: payment-launch-orchestrator
-description: "신규 결제/PG 서비스 출시(런칭)를 기획부터 구축 보고서까지 자동화하는 에이전트 팀 오케스트레이터. '신규 결제 서비스 출시', 'PG 서비스 구축 하네스', '새 결제 서비스 기획/설계/스펙/운영 문서 만들어줘', '결제 서비스 런칭 준비', '이 서비스 출시 문서 세트 만들어줘' 요청 시 사용. 후속 작업 — '제약분석만 다시', '아키텍처 수정해줘', '세션설계 보완', '스펙 갱신', '보고서 다시 종합', '이전 결과 기반으로 계속', '결제 서비스 출시 하네스 업데이트' 요청 시에도 반드시 이 스킬을 사용한다. 설계 문서 간 정합성을 각 단계 완료 직후 점진적으로 QA 검증한다. 20-areas/payment/{서비스}/docs/ 표준 구조(kickoff·constraints·architecture·session-design·operations·specs·adr·reports)를 실제 도메인 내용으로 채운다."
+description: "신규 결제/PG 서비스 출시(런칭)를 기획부터 구축 보고서까지 자동화하는 에이전트 팀 오케스트레이터. '신규 결제 서비스 출시', 'PG 서비스 구축 하네스', '새 결제 서비스 기획/설계/스펙/운영 문서 만들어줘', '결제 서비스 런칭 준비', '이 서비스 출시 문서 세트 만들어줘' 요청 시 사용. 후속 작업 — '제약분석만 다시', '아키텍처 수정해줘', '세션설계 보완', '스펙 갱신', '보고서 다시 종합', '이전 결과 기반으로 계속', '결제 서비스 출시 하네스 업데이트' 요청 시에도 반드시 이 스킬을 사용한다. 설계 문서 간 정합성을 각 단계 완료 직후 점진적으로 QA 검증한다. {service-root}/docs/ 표준 구조(kickoff·constraints·architecture·session-design·operations·specs·adr·reports)를 실제 도메인 내용으로 채운다."
 ---
 
 # Payment Launch Orchestrator — 결제 서비스 출시 에이전트 팀 오케스트레이터
@@ -32,8 +32,12 @@ description: "신규 결제/PG 서비스 출시(런칭)를 기획부터 구축 �
 
 ### Phase 0: 컨텍스트 확인 (후속 작업 지원)
 
+0. `{service-root}` 결정 — 이 팀의 모든 산출물이 `{service-root}/docs/...` 아래에 쓰인다. 프로젝트마다 문서를 두는 위치가 다르므로 특정 폴더 구조를 전제하지 않고, 아래 순서로 정한다:
+   - 프로젝트에 이미 유사 서비스 문서·컨벤션이 있으면(예: 다른 서비스가 `{어떤 경로}/{서비스명}/docs/` 형태로 존재) 그 패턴을 그대로 따른다
+   - 없으면 사용자에게 직접 확인한다 — 임의로 특정 폴더 구조(예: Obsidian PARA의 `20-areas/`)를 가정하지 않는다
+   - 확인 후에는 이번 실행 내내 같은 값을 사용한다(중간에 다시 묻지 않음)
 1. 사용자 발화에서 서비스명을 파악하고 슬러그(`{service-slug}`, kebab-case — 예: `xyz-pay`)를 정한다 — 불명확하면 사용자에게 확인
-2. `20-areas/payment/{service-slug}/docs/` 존재 여부 확인:
+2. `{service-root}/docs/` 존재 여부 확인:
    - **미존재** → 초기 실행. Phase 1로 진행
    - **존재 + 사용자가 특정 문서·팀원만 재작업 요청** ("제약분석만 다시", "아키텍처 수정해줘" 등) → **부분 재실행**. 해당 팀원 1명만 서브 에이전트로 재호출(팀 구성 불필요 — 아래 "부분 재실행 절차" 참조)
    - **존재 + 서비스 방향이 근본적으로 바뀜(새 입력)** → **새 실행**. 기존 `docs/`를 건드리지 않고 `_launch-workspace/`만 `_launch-workspace_{YYYYMMDD}/`로 이동 후 Phase 1부터 재실행 (기존 docs는 사용자 확인 후 덮어쓸지 결정)
@@ -49,9 +53,9 @@ Agent(subagent_type: "{에이전트 구성 표의 에이전트 타입, 예: paym
 ### Phase 1: 준비
 
 1. 사용자 입력(서비스 개요, 연동 대상, 목표, 알려진 제약)을 정리
-2. `20-areas/payment/{service-slug}/payment-{service-slug} 프로젝트 현황.md` 허브 노트 존재 확인
+2. `{service-root}/payment-{service-slug} 프로젝트 현황.md` 허브 노트 존재 확인
    - 없으면 `sr-obsidian:hub` 스킬(또는 `sr-obsidian:scaffold`)로 먼저 생성할지 사용자에게 확인 후 실행 — **이 오케스트레이터가 허브/WBS 생성 로직을 직접 구현하지 않는다** (기존 스킬 재사용)
-3. `20-areas/payment/{service-slug}/_launch-workspace/00_input/개요.md`에 사용자 입력 저장 (감사 추적용 — 최종 산출물은 아님)
+3. `{service-root}/_launch-workspace/00_input/개요.md`에 사용자 입력 저장 (감사 추적용 — 최종 산출물은 아님)
 
 ### Phase 2: 팀 구성
 
@@ -124,16 +128,16 @@ TaskCreate(tasks: [
 
 | 팀원 | 출력 경로 |
 |------|----------|
-| planner | `20-areas/payment/{service-slug}/docs/kickoff/`, `docs/constraints/` |
-| compliance | `20-areas/payment/{service-slug}/docs/constraints/` (02번 보강 문서 — planner와 동일 폴더, 별도 파일) |
-| architect | `20-areas/payment/{service-slug}/docs/architecture/` (01번 컴포넌트 문서) |
-| infra | `20-areas/payment/{service-slug}/docs/architecture/` (02번 인프라 사이징 문서 — architect와 동일 폴더, 별도 파일) |
-| session | `20-areas/payment/{service-slug}/docs/session-design/` |
-| ops | `20-areas/payment/{service-slug}/docs/operations/` |
-| spec | `20-areas/payment/{service-slug}/docs/specs/` |
-| qa | `20-areas/payment/{service-slug}/_launch-workspace/qa/{NN}-{체크포인트명}.md` (감사 기록 — `docs/`에는 쓰지 않는다) |
-| adr | `20-areas/payment/{service-slug}/docs/adr/` |
-| reporter | `20-areas/payment/{service-slug}/docs/reports/` |
+| planner | `{service-root}/docs/kickoff/`, `docs/constraints/` |
+| compliance | `{service-root}/docs/constraints/` (02번 보강 문서 — planner와 동일 폴더, 별도 파일) |
+| architect | `{service-root}/docs/architecture/` (01번 컴포넌트 문서) |
+| infra | `{service-root}/docs/architecture/` (02번 인프라 사이징 문서 — architect와 동일 폴더, 별도 파일) |
+| session | `{service-root}/docs/session-design/` |
+| ops | `{service-root}/docs/operations/` |
+| spec | `{service-root}/docs/specs/` |
+| qa | `{service-root}/_launch-workspace/qa/{NN}-{체크포인트명}.md` (감사 기록 — `docs/`에는 쓰지 않는다) |
+| adr | `{service-root}/docs/adr/` |
+| reporter | `{service-root}/docs/reports/` |
 
 (주의: `docs/` 표준 구조에 새 top-level 폴더를 추가하지 않는다 — compliance 산출물은 이미 존재하는 `constraints/` 폴더 안에 `02-*.md`로 들어가므로, 대상 프로젝트에 문서유형 표준이 있다면 그 세트를 그대로 유지한다.)
 
@@ -195,13 +199,13 @@ TaskCreate(tasks: [
 
 ### 정상 흐름
 1. 사용자: "새 결제 서비스 'xyz-pay' 출시 준비 문서 만들어줘 — 해외 카드사 다이렉트 연동, Q3 목표"
-2. Phase 0: `20-areas/payment/xyz-pay/docs/` 미존재 → 초기 실행
+2. Phase 0: `{xyz-pay 서비스의 문서 루트}/docs/` 미존재 → 초기 실행
 3. Phase 1: 허브 노트 없음 확인 → 사용자에게 `sr-obsidian:hub` 선행 실행 제안 → 승인 시 실행
 4. Phase 2: 10명 팀 구성, 13개 작업 등록(생산 8 + QA 5)
 5. Phase 3: planner 완료 → compliance 규제 심층 검토 시작 → compliance 완료(H급 규제 항목을 architect에 SendMessage) → architect 완료 → qa가 "QA: 아키텍처 정합성 검증" 수행, PASS → infra/session/ops 3갈래 병렬 시작 → 각각 완료 시마다 qa가 해당 체크포인트 검증 → session의 QA가 FIX 판정(예: "해외카드 시나리오가 architect의 미결 항목과 모순") → qa가 session에게 SendMessage로 구체적 위치 지적 → session 수정 → qa 재검증 PASS → spec 시작 → qa가 스펙 검증 → 중간에 infra가 "이중화 여부"를 adr에게 기록 요청, session이 해외 결제수단 관련 규제 질의를 compliance에게 SendMessage로 문의
 6. Phase 4: infra·ops·spec 3개 QA 완료 확인 후 reporter가 구축 보고서 완성, 리더가 리스크 레지스터 교차 확인(QA 강제 PASS 항목 포함 여부까지)
 7. Phase 5: 팀 정리, 사용자에게 결과 요약
-8. 예상 결과: `20-areas/payment/xyz-pay/docs/{kickoff,constraints,architecture,session-design,operations,specs,adr,reports}/` 전체 생성
+8. 예상 결과: `{xyz-pay 서비스의 문서 루트}/docs/{kickoff,constraints,architecture,session-design,operations,specs,adr,reports}/` 전체 생성
 
 ### 에러 흐름 1 — 산출물 미확보
 1. Phase 3에서 spec이 외부 카드사 연동 스펙 미확보로 절반만 완료

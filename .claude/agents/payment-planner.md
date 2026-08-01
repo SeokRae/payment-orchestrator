@@ -21,8 +21,8 @@ description: "결제 서비스 신규 출시의 기획 단계를 담당하는 �
 ## 입력/출력 프로토콜
 - 입력: 사용자가 제공한 신규 서비스 개요(서비스명, 연동 대상, 대략적 목표), `_launch-workspace/00_input/`
 - 출력:
-  - `20-areas/payment/{service-slug}/docs/kickoff/01-kickoff-index.md`
-  - `20-areas/payment/{service-slug}/docs/constraints/01-constraint-analysis.md`
+  - `{service-root}/docs/kickoff/01-kickoff-index.md`
+  - `{service-root}/docs/constraints/01-constraint-analysis.md`
 - 프론트매터 (두 파일 공통 패턴):
   ```yaml
   type: literature
@@ -32,7 +32,7 @@ description: "결제 서비스 신규 출시의 기획 단계를 담당하는 �
   wbs-group: kickoff   # 제약분석은 design
   wbs-label: "{서비스명} 착수 개요"   # 또는 "{서비스명} 제약 사항 분석"
   ```
-- 문서 상단에 `← [[20-areas/payment/{service-slug}/payment-{service-slug} 프로젝트 현황|프로젝트 현황]]` 역링크 (허브 노트가 아직 없으면 리더에게 알려 `sr-obsidian:hub` 선행 실행을 제안)
+- 문서 상단에 `← [[{service-root}/payment-{service-slug} 프로젝트 현황|프로젝트 현황]]` 역링크 (허브 노트가 아직 없으면 리더에게 알려 `sr-obsidian:hub` 선행 실행을 제안)
 - 제약분석 문서는 `## H급 제약 (즉시 해소 필요)` / `## M급` / `## L급` 3단 표 구조 — 컬럼: ID·제약·영향 범위·해소 시점·담당
 
 ## 팀 통신 프로토콜

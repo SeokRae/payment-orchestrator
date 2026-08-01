@@ -40,25 +40,26 @@
    새 결제 서비스 'xyz-pay' 출시 준비 문서 만들어줘 — 해외 카드사 다이렉트 연동, Q3 목표
    ```
 3. `payment-launch-orchestrator` 스킬이 트리거되어 10명 팀이 자동으로 조율하며 작업합니다.
-4. 결과는 `20-areas/payment/{서비스}/docs/{kickoff,constraints,architecture,session-design,operations,specs,adr,reports}/`에 생성됩니다.
+4. 결과는 `{service-root}/docs/{kickoff,constraints,architecture,session-design,operations,specs,adr,reports}/`에 생성됩니다.
 
 ### 후속 작업
 
 이미 만든 서비스에 대해 "제약분석만 다시", "아키텍처 수정해줘" 같은 요청도 같은 스킬이 처리합니다 — 영향받는 팀원만 골라 재실행합니다(전체 팀 재소집 아님). 자세한 절차는 오케스트레이터 스킬의 "Phase 0: 컨텍스트 확인" 참조.
 
-## 전제 조건 (중요 — 이식 전 필독)
+## 전제 조건
 
-이 하네스는 **Obsidian PARA vault 구조를 전제**로 설계됐습니다. 그대로 쓰려면:
+이 하네스는 문서를 어디에 둘지 **특정 폴더 구조를 강제하지 않습니다.** 오케스트레이터 Phase 0가 실행 시점에 `{service-root}`(문서 루트 경로)를 프로젝트에 이미 있는 컨벤션에서 찾거나, 없으면 사용자에게 직접 물어서 정합니다 — Obsidian PARA vault든 일반 저장소든 그대로 동작합니다.
 
-- 대상 저장소가 `20-areas/payment/{서비스}/` 형태의 폴더 구조를 쓰거나, 그렇게 매핑할 의향이 있어야 합니다.
-- 허브 노트(`{서비스} 프로젝트 현황.md`)·WBS 생성은 이 저장소에 없는 별도 플러그인([`sr-obsidian`](https://github.com/SeokRae/sr-obsidian))의 `hub`·`wbs` 스킬을 재사용하도록 설계돼 있습니다 — 없으면 Phase 1에서 사용자에게 먼저 만들지 확인하는 절차가 동작하지 않으니, 해당 스킬을 함께 설치하거나 오케스트레이터의 Phase 1을 프로젝트에 맞게 고쳐야 합니다.
-- 문서 프론트매터(`type: literature`, `wbs-group`, `wbs-label` 등)는 Dataview 기반 자동 Gantt 집계를 활용하는 vault 관례를 따릅니다. 이런 관례가 없는 프로젝트라면 프론트매터 필드는 무시해도 동작에는 지장이 없습니다.
+다만 아래 두 가지는 Obsidian vault 관례를 선택적으로 반영합니다(없어도 핵심 동작에는 지장 없습니다):
+
+- 허브 노트(`{service-root}/payment-{service-slug} 프로젝트 현황.md`) 생성은 별도 플러그인([`sr-obsidian`](https://github.com/SeokRae/sr-obsidian))의 `hub`·`wbs` 스킬을 재사용하도록 설계돼 있습니다 — 없으면 Phase 1에서 사용자가 건너뛰도록 선택하면 됩니다.
+- 문서 프론트매터(`type: literature`, `wbs-group`, `wbs-label` 등)는 Dataview 기반 자동 Gantt 집계를 활용하는 vault 관례입니다. 이런 관례가 없는 프로젝트라면 프론트매터 필드는 무시해도 동작에는 지장이 없습니다.
 
 ## 내 프로젝트로 이식하기
 
 1. `.claude/agents/payment-*.md` 10개와 `.claude/skills/{payment-launch-orchestrator,payment-compliance-review,payment-qa-review}/` 3개 디렉터리를 그대로 복사합니다.
-2. 각 에이전트 파일의 출력 경로(`20-areas/payment/{service-slug}/docs/...`)를 자기 프로젝트의 문서 위치 규칙으로 바꿉니다.
-3. `payment-planner.md`·`payment-launch-orchestrator/SKILL.md`의 "허브 노트 확인" 단계를 자기 프로젝트에 맞는 절차로 바꾸거나 제거합니다.
+2. 문서 루트(`{service-root}`)는 Phase 0에서 실행 시점에 물어보므로 파일을 미리 고칠 필요는 없습니다 — 다만 항상 같은 위치를 쓰고 싶다면 각 에이전트 파일의 `{service-root}` 표기를 고정 경로로 바꿔도 됩니다.
+3. Obsidian 허브 노트를 쓰지 않는 프로젝트라면 `payment-planner.md`·`payment-launch-orchestrator/SKILL.md`의 "허브 노트 확인" 단계를 생략하도록 안내만 해두면 됩니다(Phase 1에서 사용자가 건너뛰기를 선택할 수 있음).
 4. `payment-compliance-review`의 체크리스트는 **한국 결제 규제 기준**(2026-08-01 리서치 시점)입니다 — 해외 시장·다른 업종이면 `references/regulatory-checklist.md` 자체를 새로 조사해 교체해야 합니다.
 5. `CLAUDE.md`에 하네스 포인터를 프로젝트 컨벤션에 맞춰 추가합니다(이 저장소의 `CLAUDE.md` 형식 참고).
 

@@ -20,8 +20,8 @@ description: "결제 서비스 신규 출시 아키텍처의 네트워크 인프
 - 존/네트워크 경계는 컴포넌트가 다루는 데이터 민감도 기준으로 나눈다 (예: PAN을 만지는 컴포넌트는 별도 격리 존) — payment-compliance-analyst의 PCI-DSS 스코프 판정과 정합되게 설계
 
 ## 입력/출력 프로토콜
-- 입력: `20-areas/payment/{service-slug}/docs/architecture/01-{service-slug}-컴포넌트-역할-정의.md`(payment-architect), `docs/constraints/02-{service-slug}-규제-준수-체크리스트.md`(payment-compliance-analyst, DR·이중화 관련 항목)
-- 출력: `20-areas/payment/{service-slug}/docs/architecture/02-infra-sizing.md`
+- 입력: `{service-root}/docs/architecture/01-{service-slug}-컴포넌트-역할-정의.md`(payment-architect), `docs/constraints/02-{service-slug}-규제-준수-체크리스트.md`(payment-compliance-analyst, DR·이중화 관련 항목)
+- 출력: `{service-root}/docs/architecture/02-infra-sizing.md`
 - 프론트매터:
   ```yaml
   type: literature

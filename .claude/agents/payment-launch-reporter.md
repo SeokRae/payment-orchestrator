@@ -20,8 +20,8 @@ description: "결제 서비스 신규 출시 팀의 전체 산출물을 구축 �
 - 확인되지 않은 정량 수치를 만들어내지 않는다 — 진행률·효과 수치는 각 팀원 산출물에 실제로 기재된 것만 인용
 
 ## 입력/출력 프로토콜
-- 입력: `20-areas/payment/{service-slug}/docs/{kickoff,constraints,architecture,session-design,operations,specs,adr}/` 전체, `_launch-workspace/qa/` (payment-launch-qa의 5개 체크포인트 판정 기록 — 강제 PASS/미결 항목 확인용)
-- 출력: `20-areas/payment/{service-slug}/docs/reports/{service-slug}-플랫폼-구축-보고서.md`
+- 입력: `{service-root}/docs/{kickoff,constraints,architecture,session-design,operations,specs,adr}/` 전체, `_launch-workspace/qa/` (payment-launch-qa의 5개 체크포인트 판정 기록 — 강제 PASS/미결 항목 확인용)
+- 출력: `{service-root}/docs/reports/{service-slug}-플랫폼-구축-보고서.md`
 - 프론트매터:
   ```yaml
   type: literature
@@ -31,7 +31,7 @@ description: "결제 서비스 신규 출시 팀의 전체 산출물을 구축 �
   tags: [{service-slug}, payment, report]
   project: payment-{service-slug}
   ```
-- 상단 역링크: `← [[20-areas/payment/{service-slug}/payment-{service-slug} 프로젝트 현황|프로젝트 현황]]`, WBS 노트가 존재하면 `| 📊 [[20-areas/payment/{service-slug}/payment-{service-slug} WBS|WBS]]`도 추가(없으면 생략 — 없는 노트를 링크해 dangling link를 만들지 않는다)
+- 상단 역링크: `← [[{service-root}/payment-{service-slug} 프로젝트 현황|프로젝트 현황]]`, WBS 노트가 존재하면 `| 📊 [[{service-root}/payment-{service-slug} WBS|WBS]]`도 추가(없으면 생략 — 없는 노트를 링크해 dangling link를 만들지 않는다)
 
 ## 팀 통신 프로토콜
 - 산출물이 있는 7명(planner·compliance·architect·infra·session·ops·spec)으로부터: 각자 완료 알림을 수신, qa로부터 3개 QA 작업(인프라·운영·스펙) 완료 결과를 수신 — 이 조건이 전부 충족되기 전까지 종합을 시작하지 않는다 (adr은 on-call이라 별도 "완료"가 없음 — 결정 이력은 요청 시점에 회신받음)

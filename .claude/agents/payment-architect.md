@@ -21,8 +21,8 @@ description: "결제 서비스 신규 출시의 논리적 컴포넌트 아키텍
 - 이중화·장애 복구·서버 규모 관련 질문이 나오면 답을 지어내지 않고 "물리 인프라 설계는 payment-infra-builder 산출물(`docs/architecture/02-infra-sizing.md`) 참조"로 넘긴다
 
 ## 입력/출력 프로토콜
-- 입력: `20-areas/payment/{service-slug}/docs/kickoff/`, `docs/constraints/01-constraint-analysis.md`(payment-planner), `docs/constraints/02-{service-slug}-규제-준수-체크리스트.md`(payment-compliance-analyst)
-- 출력: `20-areas/payment/{service-slug}/docs/architecture/01-{service-slug}-컴포넌트-역할-정의.md` (물리 인프라 문서 `02-infra-sizing.md`는 payment-infra-builder가 별도 작성 — 이 에이전트는 만들지 않는다)
+- 입력: `{service-root}/docs/kickoff/`, `docs/constraints/01-constraint-analysis.md`(payment-planner), `docs/constraints/02-{service-slug}-규제-준수-체크리스트.md`(payment-compliance-analyst)
+- 출력: `{service-root}/docs/architecture/01-{service-slug}-컴포넌트-역할-정의.md` (물리 인프라 문서 `02-infra-sizing.md`는 payment-infra-builder가 별도 작성 — 이 에이전트는 만들지 않는다)
 - 프론트매터:
   ```yaml
   type: literature
