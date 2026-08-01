@@ -103,7 +103,7 @@ TaskCreate(tasks: [
 - planner → compliance: H급 제약·확정 스코프 전달 (규제 심층 검토의 입력)
 - compliance → architect: 규제 심층 검토 완료 시 H급 규제 항목 전달 (H급 규제 없이 설계 시작하지 않도록)
 - architect → infra, session, ops: 컴포넌트 구조 동시 전달 (팬아웃, 3갈래)
-- session → spec: 시나리오별 확정 필드 전달
+- session ↔ spec: 시나리오별 확정 필드 전달, spec이 세션 설계에 없는 API가 필요하면 session에게 역으로 확인 질의
 - session ↔ ops: 타임아웃/임계값 정합성 상호 확인
 - infra ↔ ops: 서버 존 구성과 운영 전환 로드맵(배포·모니터링 대상)이 어긋나지 않도록 상호 확인
 - qa → architect·infra·session·ops·spec: FIX/GAP 판정 시 구체적 위치·불일치 내용 전달, 수정 완료 알림 수신 즉시 재검증 (최대 2회)
@@ -135,7 +135,7 @@ TaskCreate(tasks: [
 | adr | `20-areas/payment/{service-slug}/docs/adr/` |
 | reporter | `20-areas/payment/{service-slug}/docs/reports/` |
 
-(주의: `docs/` 표준 구조에 새 top-level 폴더를 추가하지 않는다 — compliance 산출물은 이미 존재하는 `constraints/` 폴더 안에 `02-*.md`로 들어가므로 `.claude/rules/wbs-docs-design.md`의 표준 문서유형 세트를 그대로 유지한다.)
+(주의: `docs/` 표준 구조에 새 top-level 폴더를 추가하지 않는다 — compliance 산출물은 이미 존재하는 `constraints/` 폴더 안에 `02-*.md`로 들어가므로, 대상 프로젝트에 문서유형 표준이 있다면 그 세트를 그대로 유지한다.)
 
 ### Phase 4: 통합 확인
 
@@ -183,10 +183,9 @@ TaskCreate(tasks: [
 | 상황 | 전략 |
 |------|------|
 | 팀원 1명 실패/중지 | 리더가 감지 → SendMessage로 상태 확인 → 재시작. 재실패 시 해당 산출물 없이 하류 작업 진행, reporter에게 누락 명시 지시 |
-| architect가 H급 제약 없이 시작(planner 지연) | 리더가 개입해 architect를 대기시키고 planner 상태 확인 |
-| architect가 H급 규제 항목 없이 시작(compliance 지연) | 리더가 개입해 architect를 대기시키고 compliance 상태 확인 (TaskCreate의 `depends_on: ["규제 준수 심층 검토"]`가 정상 작동하면 원천적으로 발생하지 않아야 함 — 발생 시 의존관계 설정 오류 의심) |
+| architect가 H급 제약·H급 규제 항목 없이 시작(planner·compliance 지연) | 리더가 개입해 architect를 대기시키고 planner·compliance 상태 확인 (TaskCreate의 `depends_on: ["규제 준수 심층 검토"]`가 정상 작동하면 원천적으로 발생하지 않아야 함 — 발생 시 의존관계 설정 오류 의심) |
 | infra/session/ops 중 일부만 지연 | 나머지는 계속 진행, spec은 session의 QA 통과만으로 시작 가능(infra·ops의 QA는 spec의 하드 의존성 아님). 단 reporter는 infra·ops·spec 3개 QA 모두 완료돼야 시작 |
-| qa가 같은 불일치를 2회 재검증 후에도 발견 | 강제 PASS 처리 + 해당 문서에 "미결 항목(QA 확인 필요)" 기록 + reporter에게 SendMessage 통지. 3회차 재시도를 리더가 임의로 지시하지 않는다(무한 루프 방지가 우선) |
+| qa가 같은 불일치를 2회 재검증 후에도 발견 | 강제 PASS 처리 + 생산자에게 SendMessage로 해당 문서에 "미결 항목(QA 확인 필요)" 섹션 추가를 요청(qa 자신은 docs/에 쓰지 않는다) + reporter에게 SendMessage 통지. 3회차 재시도를 리더가 임의로 지시하지 않는다(무한 루프 방지가 우선) |
 | qa가 REDO급(전면 재설계 필요) 불일치를 발견 | qa는 판정하지 않고 즉시 리더에게 에스컬레이션 → 리더가 영향 범위(팬아웃 3갈래 전체 재작업 여부 등) 판단 후 해당 팀원(들)에게 직접 지시 |
 | adr에 결정 기록 폭주(팀원 다수가 동시 요청) | adr이 순차 처리, 리더는 개입하지 않음 (병목이 아니라 정상 동작) |
 | 외부 연동 스펙 전반 미확보 | 전체를 막지 않고 "미확보" 표기로 진행 — 스펙 확보는 이 하네스 범위 밖(사용자가 별도로 확보) |
@@ -215,7 +214,7 @@ TaskCreate(tasks: [
 1. Phase 3에서 qa가 "QA: 운영전략 정합성 검증"에서 ops 문서의 타임아웃 값이 session 문서와 다름을 발견 → FIX 판정, ops에게 SendMessage
 2. ops가 수정 후 완료 알림 → qa 재검증 → 여전히 다른 값(이번엔 반대 방향으로 어긋남) → FIX 2번째 판정
 3. ops가 다시 수정 → qa 재검증(3번째 확인) → 아직도 불일치
-4. qa는 3번째부터 재시도하지 않고 강제 PASS 처리 + ops 문서에 "미결 항목(QA 확인 필요) — 타임아웃 값이 session과 상충, 수동 확인 필요" 기록 + reporter에게 SendMessage 통지
+4. qa는 3번째부터 재시도하지 않고 강제 PASS 처리 + ops에게 SendMessage로 "미결 항목(QA 확인 필요) — 타임아웃 값이 session과 상충, 수동 확인 필요" 섹션을 문서에 추가하도록 요청(qa 자신은 docs/에 쓰지 않는다) + reporter에게 SendMessage 통지
 5. reporter가 이 항목을 리스크 레지스터 최상단(H급 취급)에 반영
 
 ## 결제 도메인 참고 자료 (팀원이 필요 시 Read)

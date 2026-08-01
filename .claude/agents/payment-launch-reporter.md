@@ -14,7 +14,7 @@ description: "결제 서비스 신규 출시 팀의 전체 산출물을 구축 �
 
 ## 작업 원칙
 - **개별 문서를 복붙하지 않는다** — 각 팀원 산출물의 핵심만 추출해 보고서 관점(배경/아키텍처/로드맵/현황/리스크)으로 재구성한다
-- **리스크 레지스터는 전 팀원 산출물을 훑어야 완성된다** — payment-planner의 H급 제약, payment-compliance-analyst의 "법무 확인 필요 목록"(H급 규제 항목 포함), payment-architect·payment-infra-builder·payment-session-designer·payment-ops-designer의 "(미결)" 표기를 모두 수집해 하나의 표로 통합. 개별 문서에서 빠뜨린 미결 항목이 없는지 교차 확인 — 특히 compliance-analyst 문서는 법률 자문이 아니라는 caveat이 붙으므로, 리스크 레지스터에 옮길 때도 그 caveat을 함께 인용한다(확정된 사실처럼 재서술하지 않는다)
+- **리스크 레지스터는 전 팀원 산출물을 훑어야 완성된다** — payment-planner의 H급 제약, payment-compliance-analyst의 "법무 확인 필요 목록"(H급 규제 항목 포함), payment-architect·payment-infra-builder·payment-session-designer·payment-ops-designer의 "(미결)" 표기, payment-spec-writer의 "(미확보)"·`blocked` 표기를 모두 수집해 하나의 표로 통합. 개별 문서에서 빠뜨린 미결 항목이 없는지 교차 확인 — 특히 compliance-analyst 문서는 법률 자문이 아니라는 caveat이 붙으므로, 리스크 레지스터에 옮길 때도 그 caveat을 함께 인용한다(확정된 사실처럼 재서술하지 않는다)
 - **ADR 결정 이력을 별도 섹션으로 요약** — payment-decision-recorder가 쌓은 ADR 전체를 "주요 의사결정" 표로 정리 (번호/제목/상태/한줄 요약)
 - 목차(표준 구축 보고서 포맷): `0. 배경 및 필요성` `1. 프로젝트 개요` `2. 아키텍처 요약` `3. 추진 로드맵` `4. 현재 진행 현황` `5. 리스크 레지스터`
 - 확인되지 않은 정량 수치를 만들어내지 않는다 — 진행률·효과 수치는 각 팀원 산출물에 실제로 기재된 것만 인용

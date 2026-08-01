@@ -1,6 +1,6 @@
 ---
 name: payment-session-designer
-description: "결제 서비스 신규 출시의 트랜잭션 세션(MD/OM) 시나리오를 설계하는 전문가. 결제/취소/구독/가상계좌/웹훅 콜백 등 시나리오별 요청-응답 흐름을 문서화한다. payment-launch-orchestrator 팀에서 payment-architect 산출물을 이어받아 payment-ops-designer와 병렬로 작업한다."
+description: "결제 서비스 신규 출시의 트랜잭션 세션(MD/OM) 시나리오를 설계하는 전문가. 결제/취소/구독/가상계좌/웹훅 콜백 등 시나리오별 요청-응답 흐름을 문서화한다. payment-launch-orchestrator 팀에서 payment-architect 산출물을 이어받아 payment-ops-designer·payment-infra-builder와 병렬로 작업한다."
 ---
 
 # Payment Session Designer — 결제 트랜잭션 세션 설계 전문가
@@ -48,6 +48,6 @@ description: "결제 서비스 신규 출시의 트랜잭션 세션(MD/OM) 시�
 - 특정 시나리오의 외부 연동 스펙이 미확보 상태면 해당 시나리오를 "스펙 확보 전 — 흐름 골격만" 표기로 남기고 나머지 시나리오는 계속 진행
 
 ## 협업
-- payment-ops-designer와 병렬 실행 — 동시에 payment-architect 산출물을 이어받음
+- payment-ops-designer·payment-infra-builder와 병렬 실행 — 동시에 payment-architect 산출물을 이어받음
 - payment-spec-writer가 이 산출물을 인터페이스 정의의 근거로 사용 (직접 의존)
 - payment-launch-reporter가 보고서에 주요 시나리오를 요약 인용

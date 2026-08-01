@@ -48,4 +48,4 @@ description: "결제 서비스 신규 출시의 기획 단계를 담당하는 �
 ## 협업
 - 이 팀의 시작점 — 다른 모든 팀원(compliance-analyst·architect·session-designer·ops-designer)이 이 산출물을 전제로 작업
 - payment-compliance-analyst가 이 산출물을 직접 이어받아 규제 심층 검토를 수행(팔로업)
-- payment-launch-reporter가 최종 보고서의 "배경 및 필요성", "제약" 섹션에 이 문서를 인용
+- payment-launch-reporter가 최종 보고서의 "배경 및 필요성", "리스크 레지스터" 섹션에 이 문서를 인용
