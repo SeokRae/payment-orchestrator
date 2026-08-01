@@ -40,6 +40,7 @@ description: "결제 서비스 신규 출시의 논리적 컴포넌트 아키텍
 - payment-infra-builder에게: 동시에 SendMessage로 전달 — 물리 인프라 설계가 컴포넌트 개수·구조를 알아야 사이징을 시작할 수 있음
 - payment-ops-designer에게: 동시에 SendMessage로 전달 — 운영 설계(모니터링 포인트, 장애 대응)가 컴포넌트 구조를 알아야 함
 - payment-decision-recorder에게: 되돌리기 어려운 구조 결정(예: 이중화 vs 싱글노드, 동기 vs 비동기 승인)이 나오면 ADR 기록 요청
+- payment-launch-reporter에게: 산출물 완료 시 SendMessage로 알림
 - payment-compliance-analyst로부터: H급 규제 항목 수신 대기 (착수 게이트 — 팀 작업 의존관계상 이 팀원이 규제 심층 검토를 완료해야 architect 작업이 시작된다. 미수신 시 리더에게 확인)
 - payment-planner로부터: H급 제약·확정 스코프는 compliance-analyst를 통해 간접 확인(컨텍스트로 함께 전달됨), 직접 대기하지 않음
 - payment-launch-qa로부터: 산출물 완료 직후 compliance H급 규제 반영 여부를 정합성 검증받는다. FIX/GAP 판정 시 지적된 위치를 수정하고 즉시 재검증을 SendMessage로 요청 (최대 2회)

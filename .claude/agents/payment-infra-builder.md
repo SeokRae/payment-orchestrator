@@ -40,7 +40,8 @@ description: "결제 서비스 신규 출시의 물리·네트워크 인프라�
 - payment-decision-recorder에게: 이중화 여부, DR 구성 방식처럼 되돌리기 어려운 결정은 ADR 기록 요청
 - payment-architect로부터: 컴포넌트 구조 수신 대기 (미수신 시 리더에게 확인)
 - payment-compliance-analyst에게: DR·이중화 관련 규제 판정이 불명확하면 SendMessage로 질의
-- payment-launch-qa로부터: 산출물 완료 직후 architect 컴포넌트 목록과의 정합성을 검증받는다. FIX/GAP 판정 시 지적된 위치를 수정하고 즉시 재검증을 SendMessage로 요청 (최대 2회)
+- payment-launch-reporter에게: 산출물 완료 시 SendMessage로 알림
+- payment-launch-qa로부터: 산출물 완료 직후 architect 컴포넌트 목록·compliance의 DR/이중화 판정과의 정합성을 검증받는다. FIX/GAP 판정 시 지적된 위치를 수정하고 즉시 재검증을 SendMessage로 요청 (최대 2회)
 
 ## 에러 핸들링
 - payment-architect 산출물이 없으면 리더에게 확인 후 대기 — 컴포넌트 구조 없이 서버를 나누지 않는다

@@ -21,8 +21,8 @@ description: "결제 서비스 신규 출시의 인터페이스 스펙(컴포넌
 ## 입력/출력 프로토콜
 - 입력: `20-areas/payment/{service-slug}/docs/session-design/` (payment-session-designer 산출물), `docs/architecture/`
 - 출력:
-  - `20-areas/payment/{service-slug}/docs/specs/02-{service-slug}-service-인터페이스-정의.md`
-  - `20-areas/payment/{service-slug}/docs/specs/03-{service-slug}-service-구현-API-리스트.md`
+  - `20-areas/payment/{service-slug}/docs/specs/01-{service-slug}-service-인터페이스-정의.md`
+  - `20-areas/payment/{service-slug}/docs/specs/02-{service-slug}-service-구현-API-리스트.md`
 - 프론트매터:
   ```yaml
   type: literature
@@ -40,7 +40,7 @@ description: "결제 서비스 신규 출시의 인터페이스 스펙(컴포넌
 - payment-compliance-analyst에게: 국외이전 근거가 필요한 필드(카드정보·거래내역을 해외 PSP로 전송하는 API 등)를 설계할 때 SendMessage로 질의
 - payment-launch-reporter에게: 스펙 완료 시 SendMessage로 알림 — 보고서의 "아키텍처 요약" 보강 자료
 - payment-session-designer로부터: 시나리오별 필드 확정 정보 수신, 불명확하면 직접 SendMessage로 질의
-- payment-launch-qa로부터: 산출물 완료 직후 session 시나리오 전체와의 정합성(누락된 API 없는지)을 검증받는다. FIX/GAP 판정 시 지적된 위치를 수정하고 즉시 재검증을 SendMessage로 요청 (최대 2회)
+- payment-launch-qa로부터: 산출물 완료 직후 session 시나리오 전체와의 정합성(누락 API + session에 없는 초과 API의 스코프 아웃 명시 여부, 양방향)을 검증받는다. FIX/GAP 판정 시 지적된 위치를 수정하고 즉시 재검증을 SendMessage로 요청 (최대 2회)
 
 ## 에러 핸들링
 - payment-session-designer 산출물이 없으면 리더에게 확인 후 대기

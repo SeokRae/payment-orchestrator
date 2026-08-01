@@ -113,6 +113,8 @@ TaskCreate(tasks: [
 - 전 팀원 → compliance: 규제 관련 질의 발생 시 SendMessage로 문의 (adr과 동일한 on-call 패턴)
 - 전 팀원 → reporter: 각자 산출물 완료 알림
 - qa → reporter: 각 체크포인트 판정 결과(강제 PASS 포함) 요약 전달 — 리스크 레지스터의 "QA 확인 필요" 항목 근거
+- reporter → adr: ADR 전체 목록을 SendMessage로 요청 (Phase 4 시작 시점) — adr → reporter: 목록 전달
+- reporter → compliance: "법무 확인 필요 목록"(H급 규제 항목 포함)을 SendMessage로 요청
 
 **리더 모니터링:**
 - 팀원이 유휴 상태가 되면 자동 알림 수신 → 다음 작업이 의존성 대기 중인지, 막힌 것인지 확인
@@ -158,12 +160,12 @@ TaskCreate(tasks: [
                   │                  ↑
                   │                  └──(전 팀원, 규제 질의 시 on-call)──┘
                   │
-              architect → [QA: 아키텍처 정합성] ─(FIX 시 되돌림, 최대 2회)─┐
-                                  │                                        │
-                                  ├─SendMessage→ infra   → [QA: 인프라]  ←──┘
-                                  ├─SendMessage→ session → [QA: 세션]  ──→ spec → [QA: 스펙]
-                                  └─SendMessage→ ops    → [QA: 운영]
-                                  (infra ↔ ops 정합성 상호 확인)
+              architect → [QA: 아키텍처 정합성]
+                  │
+                  ├─SendMessage→ infra   → [QA: 인프라]
+                  ├─SendMessage→ session → [QA: 세션]  ──→ spec → [QA: 스펙]
+                  └─SendMessage→ ops    → [QA: 운영]
+                  (infra ↔ ops · session ↔ ops 정합성 상호 확인)
                   │
         (전 팀원) ──SendMessage(결정 발생시)→ adr
         (전 팀원) ──SendMessage(규제 질의시)→ compliance

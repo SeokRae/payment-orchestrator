@@ -40,6 +40,7 @@ description: "결제 서비스 신규 출시의 트랜잭션 세션(MD/OM) 시�
 - payment-architect로부터: 컴포넌트 구조 수신 대기 (미수신 시 리더에게 확인)
 - payment-decision-recorder에게: 동기/비동기 처리 방식, 재시도 정책처럼 되돌리기 어려운 결정은 ADR 기록 요청
 - payment-compliance-analyst에게: 해외 결제수단·가상자산 연동 시나리오처럼 규제 해당 여부가 불확실한 흐름을 설계할 때 SendMessage로 질의
+- payment-launch-reporter에게: 산출물 완료 시 SendMessage로 알림
 - payment-launch-qa로부터: 산출물 완료 직후 architect 컴포넌트 경계와의 정합성을 검증받는다. FIX/GAP 판정 시 지적된 위치를 수정하고 즉시 재검증을 SendMessage로 요청 (최대 2회) — 이 QA를 통과해야 payment-spec-writer가 작업을 시작할 수 있다
 
 ## 에러 핸들링

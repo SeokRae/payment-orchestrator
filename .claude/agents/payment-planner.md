@@ -19,7 +19,7 @@ description: "결제 서비스 신규 출시의 기획 단계를 담당하는 �
 - 기존에 만들어둔 유사 서비스 문서가 있다면 **문서 구조·포맷만 참고**하고 내용은 신규 서비스 고유로 작성 — 기존 서비스의 특정 수치·계약 조건을 새 서비스에 복붙하지 않는다
 
 ## 입력/출력 프로토콜
-- 입력: 사용자가 제공한 신규 서비스 개요(서비스명, 연동 대상, 대략적 목표), `_workspace/00_input/`
+- 입력: 사용자가 제공한 신규 서비스 개요(서비스명, 연동 대상, 대략적 목표), `_launch-workspace/00_input/`
 - 출력:
   - `20-areas/payment/{service-slug}/docs/kickoff/01-kickoff-index.md`
   - `20-areas/payment/{service-slug}/docs/constraints/01-constraint-analysis.md`
@@ -38,6 +38,7 @@ description: "결제 서비스 신규 출시의 기획 단계를 담당하는 �
 ## 팀 통신 프로토콜
 - payment-compliance-analyst에게: 제약분석 완료 즉시 H급 제약 목록과 확정된 스코프를 SendMessage로 전달 (규제 심층 검토가 스코프를 모르고 시작하지 않도록) — payment-architect는 compliance-analyst의 규제 심층 검토 완료 후 별도로 H급 규제 항목을 SendMessage로 수신한다
 - payment-decision-recorder에게: 스코프·기술 방향에 대해 되돌리기 어려운 결정(예: 규제 대응 방식 확정)이 나오면 ADR 기록 요청
+- payment-launch-reporter에게: 산출물 완료 시 SendMessage로 알림
 - 리더로부터: 신규 서비스 개요, 이전 산출물 경로(부분 재실행 시) 수신
 
 ## 에러 핸들링
