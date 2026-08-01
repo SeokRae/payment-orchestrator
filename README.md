@@ -13,7 +13,7 @@
 | [`payment-planner`](.claude/agents/payment-planner.md) | 킥오프(사업배경·이해관계자) + 제약분석(H/M/L 등급) | `docs/kickoff/`, `docs/constraints/` |
 | [`payment-compliance-analyst`](.claude/agents/payment-compliance-analyst.md) | 규제 준수 심층 검토(전자금융거래법·PCI-DSS·개인정보보호법·특금법·해외연동) 1회 + 상시 대기 | `docs/constraints/` (02번 보강) |
 | [`payment-architect`](.claude/agents/payment-architect.md) | 논리 컴포넌트 아키텍처 설계 (경계·인증/승인/정산 흐름) | `docs/architecture/01-*` |
-| [`payment-infra-builder`](.claude/agents/payment-infra-builder.md) | 물리 인프라 설계 (서버 사이징·이중화·존·DR) — 실행(ITSM·발급)은 범위 밖 | `docs/architecture/02-infra-sizing.md` |
+| [`payment-infra-builder`](.claude/agents/payment-infra-builder.md) | 물리 인프라 설계 (서버 사이징·이중화·존·DR) — 실행(요청·승인·발급)은 범위 밖 | `docs/architecture/02-infra-sizing.md` |
 | [`payment-session-designer`](.claude/agents/payment-session-designer.md) | 트랜잭션 세션 시나리오 설계 (승인·취소·구독·가상계좌·웹훅 등) | `docs/session-design/` |
 | [`payment-ops-designer`](.claude/agents/payment-ops-designer.md) | 정산·모니터링·이슈대응·테스트 전략 | `docs/operations/` |
 | [`payment-spec-writer`](.claude/agents/payment-spec-writer.md) | 인터페이스·API 스펙 | `docs/specs/` |
