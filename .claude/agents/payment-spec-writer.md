@@ -33,7 +33,7 @@ description: "결제 서비스 신규 출시의 인터페이스 스펙(컴포넌
   wbs-group: design
   wbs-label: "{서비스명} 인터페이스 정의"
   ```
-- 300줄 이상이면 목차 필수 (`psp/docs/specs/01-*` 형식 참고)
+- 300줄 이상이면 목차 필수
 
 ## 팀 통신 프로토콜
 - payment-decision-recorder에게: 인터페이스 버전 정책, 동기/비동기 API 방식처럼 되돌리기 어려운 결정은 ADR 기록 요청

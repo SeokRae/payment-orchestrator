@@ -26,13 +26,13 @@ description: "신규 결제/PG 서비스 출시(런칭)를 기획부터 구축 �
 | adr | payment-decision-recorder | 의사결정 기록 (상시 대기) | `docs/adr/` |
 | reporter | payment-launch-reporter | 구축 보고서 종합 | `docs/reports/` |
 
-의존 관계: `planner` → `compliance` → `architect` → **QA(아키텍처)** → (`infra` ∥ `session` ∥ `ops`) → **QA(각 산출물)** → `spec`(session의 QA 통과 후) → **QA(스펙)** → `reporter`. `architect`는 논리 설계만 담당하고 물리 인프라(서버 대수·이중화·존·DR)는 `infra`로 분리되어 있다 — 실제 이 vault의 PSP·FIE 프로젝트도 인프라 구축과 서비스 구축을 별도 이슈로 다뤄온 전례를 반영. `qa`는 매 생산자 직후 `payment-qa-review` 스킬로 경계면 교차검증을 수행하는 생성-검증 게이트이며, "문서 QA"만 담당한다(실제 코드 QA는 범위 밖 — 아래 "결제 도메인 참고 자료" 및 `payment-qa-review` 스킬 참조). `compliance`는 planner 완료 직후 1회 심층 검토를 수행한 뒤, `adr`과 마찬가지로 고정 순서 없이 전 팀원의 SendMessage 규제 질의에 상시 응답한다. `adr`은 고정 순서 없이 전 팀원의 SendMessage 요청에 응답.
+의존 관계: `planner` → `compliance` → `architect` → **QA(아키텍처)** → (`infra` ∥ `session` ∥ `ops`) → **QA(각 산출물)** → `spec`(session의 QA 통과 후) → **QA(스펙)** → `reporter`. `architect`는 논리 설계만 담당하고 물리 인프라(서버 대수·이중화·존·DR)는 `infra`로 분리되어 있다 — 실제 서비스 구축 현장에서도 인프라 구축과 어플리케이션(서비스) 구축을 별도 트랙으로 다루는 경우가 흔한 것을 반영한 구조다. `qa`는 매 생산자 직후 `payment-qa-review` 스킬로 경계면 교차검증을 수행하는 생성-검증 게이트이며, "문서 QA"만 담당한다(실제 코드 QA는 범위 밖 — `payment-qa-review` 스킬 참조). `compliance`는 planner 완료 직후 1회 심층 검토를 수행한 뒤, `adr`과 마찬가지로 고정 순서 없이 전 팀원의 SendMessage 규제 질의에 상시 응답한다. `adr`은 고정 순서 없이 전 팀원의 SendMessage 요청에 응답.
 
 ## 워크플로우
 
 ### Phase 0: 컨텍스트 확인 (후속 작업 지원)
 
-1. 사용자 발화에서 서비스명을 파악하고 슬러그(`{service-slug}`, kebab-case, 기존 `psp`·`financial-information-exchange`와 같은 규칙)를 정한다 — 불명확하면 사용자에게 확인
+1. 사용자 발화에서 서비스명을 파악하고 슬러그(`{service-slug}`, kebab-case — 예: `xyz-pay`)를 정한다 — 불명확하면 사용자에게 확인
 2. `20-areas/payment/{service-slug}/docs/` 존재 여부 확인:
    - **미존재** → 초기 실행. Phase 1로 진행
    - **존재 + 사용자가 특정 문서·팀원만 재작업 요청** ("제약분석만 다시", "아키텍처 수정해줘" 등) → **부분 재실행**. 해당 팀원 1명만 서브 에이전트로 재호출(팀 구성 불필요 — 아래 "부분 재실행 절차" 참조)
@@ -118,7 +118,7 @@ TaskCreate(tasks: [
 - 팀원이 유휴 상태가 되면 자동 알림 수신 → 다음 작업이 의존성 대기 중인지, 막힌 것인지 확인
 - `TaskGet`으로 전체 진행률 확인, 특정 팀원이 30분 이상 진행 없이 막히면 `SendMessage`로 상태 확인
 
-**산출물 저장 (최종 경로 — `_launch-workspace/`가 아닌 실제 vault 위치):**
+**산출물 저장 (최종 경로 — `_launch-workspace/`가 아닌 실제 문서 저장 위치):**
 
 | 팀원 | 출력 경로 |
 |------|----------|
@@ -218,8 +218,8 @@ TaskCreate(tasks: [
 
 ## 결제 도메인 참고 자료 (팀원이 필요 시 Read)
 
-- 문서 구조·포맷 참고용(내용 복사 금지): `20-areas/payment/psp/docs/**`, `20-areas/payment/financial-information-exchange/docs/**`
-- 도메인 지식: `30-resources/domain/nicepay/**`, `30-resources/domain/stripe/**` (있는 범위 내)
+- 문서 구조·포맷 참고용(내용 복사 금지): 대상 프로젝트에 이미 만들어둔 유사 결제 서비스 문서가 있다면 구조만 참고
+- 도메인 지식: 대상 프로젝트에 벤더별(카드사·VAN·PSP) 연동 문서가 있다면 활용 (있는 범위 내)
 - 규제 판단 근거: `.claude/skills/payment-compliance-review/references/regulatory-checklist.md` (compliance 팀원이 Skill 도구로 호출, 다른 팀원이 규제 맥락을 직접 확인할 때도 Read 가능)
 - QA 검증 매트릭스·판정 기준: `.claude/skills/payment-qa-review/SKILL.md` (qa 팀원이 Skill 도구로 호출 — **"문서 QA"만 다룬다. 실제 구현 코드 테스트("개발 QA")는 이 하네스 범위 밖**이며 별도 코드베이스에서 진행됨을 팀원 전원이 인지)
-- 문서화 표준: `20-areas/CLAUDE.md`, `.claude/rules/wbs-docs-design.md`, `30-resources/methodology/dev-workflow/프로젝트 문서화 구조 표준`
+- 문서화 표준: 대상 프로젝트에 문서 구조 표준이 있다면 참고
