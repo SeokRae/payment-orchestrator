@@ -1,0 +1,8 @@
+# 실행 산출물 (실행 시 생성, 커밋 대상 아님)
+_launch-workspace/*
+!_launch-workspace/.gitkeep
+
+# IDE
+.idea/
+*.iml
+.DS_Store
