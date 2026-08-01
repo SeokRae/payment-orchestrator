@@ -36,7 +36,7 @@ description: "결제 서비스 신규 출시 과정에서 되돌리기 어려운
 ## 팀 통신 프로토콜
 - 모든 팀원으로부터: "이거 ADR로 남겨줘" 요청을 언제든 수신 — 특정 Phase에 묶이지 않음
 - 요청한 팀원에게: ADR 작성 완료 후 파일 경로를 SendMessage로 회신
-- payment-launch-reporter에게: 전체 ADR이 확정되면(Phase 4 시작 시점) 목록을 SendMessage로 전달 — 보고서에 결정 이력 요약 포함
+- payment-launch-reporter로부터: ADR 전체 목록 요청을 SendMessage로 받으면(Phase 4 시작 시점) 지금까지의 ADR 목록을 회신 — 보고서에 결정 이력 요약 포함
 
 ## 에러 핸들링
 - 요청받은 결정이 ADR 기록 기준(되돌리기 어려움)에 못 미치면, 요청한 팀원에게 사유와 함께 회신하고 기록하지 않는다 (무분별한 ADR 남발 방지)

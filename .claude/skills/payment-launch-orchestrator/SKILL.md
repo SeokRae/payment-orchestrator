@@ -41,7 +41,7 @@ description: "신규 결제/PG 서비스 출시(런칭)를 기획부터 구축 �
 
 **부분 재실행 절차 (팀 불필요):**
 ```
-Agent(subagent_type: "payment-{역할}", model: "opus", prompt:
+Agent(subagent_type: "{에이전트 구성 표의 에이전트 타입, 예: payment-architect}", model: "opus", prompt:
   "기존 산출물 {경로}를 Read하고, 다음 피드백을 반영해 수정하라: {사용자 피드백}")
 ```
 하류 팀원에게 영향이 있으면(예: 아키텍처 변경 시 세션설계·운영설계도 영향) 사용자에게 연쇄 재실행 필요 여부를 확인한다.
@@ -111,7 +111,7 @@ TaskCreate(tasks: [
 - qa → 리더: REDO급(전면 재설계 필요) 불일치 발견 시 판정 없이 즉시 에스컬레이션
 - 전 팀원 → adr: 되돌리기 어려운 결정 발생 시 기록 요청
 - 전 팀원 → compliance: 규제 관련 질의 발생 시 SendMessage로 문의 (adr과 동일한 on-call 패턴)
-- 전 팀원 → reporter: 각자 산출물 완료 알림
+- 산출물이 있는 7명(planner·compliance·architect·infra·session·ops·spec) → reporter: 각자 완료 알림 (adr은 on-call이라 완료 알림 없음 — 요청 시 회신)
 - qa → reporter: 각 체크포인트 판정 결과(강제 PASS 포함) 요약 전달 — 리스크 레지스터의 "QA 확인 필요" 항목 근거
 - reporter → adr: ADR 전체 목록을 SendMessage로 요청 (Phase 4 시작 시점) — adr → reporter: 목록 전달
 - reporter → compliance: "법무 확인 필요 목록"(H급 규제 항목 포함)을 SendMessage로 요청
