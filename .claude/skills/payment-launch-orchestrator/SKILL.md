@@ -62,7 +62,7 @@ TeamCreate(
     { name: "planner",    agent_type: "payment-planner",             model: "opus", prompt: "{서비스 개요 + Phase 1 입력}" },
     { name: "compliance", agent_type: "payment-compliance-analyst",  model: "opus", prompt: "planner 완료 후 5개 규제 도메인(전자금융거래법·PCI-DSS·개인정보보호법·특금법·해외PSP연동) 심층 검토를 1회 수행하고, 이후 팀 전체의 규제 질의에 상시 대기한다" },
     { name: "architect",  agent_type: "payment-architect",           model: "opus", prompt: "..." },
-    { name: "infra",      agent_type: "payment-infra-builder",       model: "opus", prompt: "architect 완료 후 물리 인프라(서버 사이징·이중화·존·DR)를 설계한다. 인프라 요청·승인 절차·서버 발급 등 실제 실행은 범위 밖 — 설계 문서만 작성" },
+    { name: "infra",      agent_type: "payment-infra-builder",       model: "opus", prompt: "architect 완료 후 물리 인프라(서버 사이징·이중화·존·DR)를 설계한다. 실제 서버 구축은 범위 밖 — 설계 문서만 작성" },
     { name: "session",    agent_type: "payment-session-designer",    model: "opus", prompt: "..." },
     { name: "ops",        agent_type: "payment-ops-designer",        model: "opus", prompt: "..." },
     { name: "spec",       agent_type: "payment-spec-writer",         model: "opus", prompt: "..." },
