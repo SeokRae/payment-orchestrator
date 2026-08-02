@@ -1,6 +1,6 @@
 ---
-name: payment-compliance-review
-description: 결제/PG 서비스의 규제·정책 준수 여부를 5개 도메인(전자금융거래법 등록·인허가, PCI-DSS, 개인정보보호법, 특정금융정보법 AML/VASP, 해외 PSP 연동 외국환거래법·GDPR) 체크리스트로 대조해 H/M/L 리스크 등급을 판정한다. payment-launch-orchestrator 팀의 payment-compliance-analyst가 내부적으로 호출하지만, 사용자가 직접 트리거해도 동작한다. "규제 검토", "컴플라이언스 체크", "법적 리스크 확인", "이 서비스 규제상 문제없나", "PG 등록 대상인지 확인", "PCI-DSS 대응해야 하나", "개인정보 국외이전 괜찮나" 요청 시 사용. Keywords: 규제, 컴플라이언스, compliance, 법적 리스크, 전자금융거래법, PCI-DSS, 개인정보보호법, 특금법, VASP, AML, GDPR, 외국환거래법, PG 등록, 인허가.
+name: compliance-review
+description: "결제/PG 서비스의 규제·정책 준수 여부를 5개 도메인(전자금융거래법 등록·인허가, PCI-DSS, 개인정보보호법, 특정금융정보법 AML/VASP, 해외 PSP 연동 외국환거래법·GDPR) 체크리스트로 대조해 H/M/L 리스크 등급을 판정한다. launch-orchestrator 팀의 payment-compliance-analyst가 내부적으로 호출하지만, 사용자가 직접 트리거해도 동작한다. \"규제 검토\", \"컴플라이언스 체크\", \"법적 리스크 확인\", \"이 서비스 규제상 문제없나\", \"PG 등록 대상인지 확인\", \"PCI-DSS 대응해야 하나\", \"개인정보 국외이전 괜찮나\" 요청 시 사용. Keywords: 규제, 컴플라이언스, compliance, 법적 리스크, 전자금융거래법, PCI-DSS, 개인정보보호법, 특금법, VASP, AML, GDPR, 외국환거래법, PG 등록, 인허가."
 allowed-tools: Read, Glob, Grep, Write
 ---
 
@@ -10,14 +10,14 @@ allowed-tools: Read, Glob, Grep, Write
 
 ## 언제 사용하는가
 
-- payment-launch-orchestrator 팀 안에서: `payment-compliance-analyst`가 planner 완료 직후 1회 심층 검토 시, 그리고 이후 팀원의 규제 질의에 응답할 때마다 이 스킬을 호출
+- launch-orchestrator 팀 안에서: `payment-compliance-analyst`가 planner 완료 직후 1회 심층 검토 시, 그리고 이후 팀원의 규제 질의에 응답할 때마다 이 스킬을 호출
 - 팀 밖 단독 트리거: 사용자가 특정 서비스·기능에 대해 "규제상 문제없는지", "PG 등록 대상인지", "PCI-DSS 범위가 어떻게 되는지" 등을 물을 때 바로 실행 — 오케스트레이터 전체를 돌릴 필요 없음
 
 ## 절차
 
 ### 1. 서비스 특성 파악
 
-먼저 아래 질문에 답할 수 있는 정보를 모은다. 이미 제공된 문서(`docs/kickoff/`, `docs/constraints/01-constraint-analysis.md`, 사용자 발화)에서 찾되, 없으면 사용자에게 직접 묻는다 — **추정해서 채우지 않는다.**
+먼저 아래 질문에 답할 수 있는 정보를 모은다. 이미 제공된 문서(`docs/kickoff/`, `docs/constraints/01-{service-slug}-제약-분석.md`, 사용자 발화)에서 찾되, 없으면 사용자에게 직접 묻는다 — **추정해서 채우지 않는다.**
 
 - 결제 수단이 국내 카드/계좌 기반인가, 해외 카드사/PSP 직접 연동인가?
 - 카드번호(PAN)를 자사 서버가 직접 저장/처리/전송하는가, 아니면 결제창을 완전히 위탁(리디렉션/iframe)하는가?
