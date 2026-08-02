@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>payment-launch-orchestrator — 결제 서비스 출시 자동화 하네스</title>
+<meta name="description" content="신규 결제/PG 서비스 출시를 기획부터 구축 보고서까지 10명의 AI 에이전트 팀으로 자동화하는 Claude Code 하네스" />
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --surface: #ffffff;
+    --surface-2: #eef0f7;
+    --border: #dfe2ec;
+    --text: #1a1d29;
+    --text-muted: #5b6072;
+    --accent: #4338ca;
+    --accent-strong: #3730a3;
+    --accent-soft: #eceafe;
+    --accent2: #0f766e;
+    --accent2-soft: #e3f5f2;
+    --warn: #b45309;
+    --warn-soft: #fef3e2;
+    --code-bg: #f1f2f8;
+    --shadow: 0 1px 2px rgba(20, 22, 40, 0.04), 0 8px 24px rgba(20, 22, 40, 0.06);
+    --radius: 14px;
+  }
+  :root[data-theme="dark"] {
+    --bg: #0b0d14;
+    --surface: #12151f;
+    --surface-2: #171b28;
+    --border: #262b3d;
+    --text: #e7e9f2;
+    --text-muted: #9a9fb5;
+    --accent: #a5b4fc;
+    --accent-strong: #c7d2fe;
+    --accent-soft: #1e1f3d;
+    --accent2: #5eead4;
+    --accent2-soft: #113531;
+    --warn: #fbbf24;
+    --warn-soft: #2e2410;
+    --code-bg: #171b28;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 28px rgba(0, 0, 0, 0.35);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0b0d14;
+      --surface: #12151f;
+      --surface-2: #171b28;
+      --border: #262b3d;
+      --text: #e7e9f2;
+      --text-muted: #9a9fb5;
+      --accent: #a5b4fc;
+      --accent-strong: #c7d2fe;
+      --accent-soft: #1e1f3d;
+      --accent2: #5eead4;
+      --accent2-soft: #113531;
+      --warn: #fbbf24;
+      --warn-soft: #2e2410;
+      --code-bg: #171b28;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 28px rgba(0, 0, 0, 0.35);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+      "Segoe UI", "Malgun Gothic", sans-serif;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  code, pre, .mono {
+    font-family: "SFMono-Regular", ui-monospace, Menlo, Consolas, "D2Coding", monospace;
+  }
+  a { color: var(--accent-strong); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+
+  /* header / nav */
+  .topbar {
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar-inner {
+    max-width: 980px; margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; white-space: nowrap; }
+  .brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex: none; }
+  .navlinks { display: flex; gap: 18px; overflow-x: auto; scrollbar-width: none; }
+  .navlinks::-webkit-scrollbar { display: none; }
+  .navlinks a { font-size: 13.5px; color: var(--text-muted); white-space: nowrap; }
+  .navlinks a:hover { color: var(--text); text-decoration: none; }
+  .theme-toggle {
+    border: 1px solid var(--border); background: var(--surface); color: var(--text-muted);
+    border-radius: 999px; padding: 6px 12px; font-size: 12.5px; cursor: pointer; flex: none;
+  }
+  .theme-toggle:hover { color: var(--text); }
+
+  /* hero */
+  .hero { padding: 56px 0 28px; }
+  .hero h1 { font-size: clamp(28px, 4vw, 38px); margin: 0 0 12px; letter-spacing: -0.01em; }
+  .badges { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; padding: 4px 10px;
+    border-radius: 999px; border: 1px solid var(--border); color: var(--text-muted); background: var(--surface);
+  }
+  .lede { font-size: 17px; color: var(--text); max-width: 760px; }
+  .lede-sub { font-size: 15px; color: var(--text-muted); max-width: 760px; margin-top: 10px; }
+  .cta-row { display: flex; gap: 10px; margin-top: 22px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 10px;
+    font-size: 14px; font-weight: 600; border: 1px solid transparent;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-strong); text-decoration: none; }
+  .btn-ghost { background: var(--surface); border-color: var(--border); color: var(--text); }
+  .btn-ghost:hover { border-color: var(--accent); text-decoration: none; }
+
+  /* sections */
+  section { padding: 40px 0; border-top: 1px solid var(--border); }
+  section:first-of-type { border-top: none; }
+  h2 { font-size: 22px; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .section-sub { color: var(--text-muted); font-size: 14.5px; margin: 0 0 22px; max-width: 700px; }
+
+  /* quick facts */
+  .facts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  @media (max-width: 720px) { .facts { grid-template-columns: 1fr; } }
+  .fact-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; box-shadow: var(--shadow);
+  }
+  .fact-card h3 { margin: 0 0 6px; font-size: 14px; }
+  .fact-card p { margin: 0; font-size: 13.5px; color: var(--text-muted); }
+  .fact-card.warn { border-color: color-mix(in srgb, var(--warn) 35%, var(--border)); }
+  .fact-card.warn h3 { color: var(--warn); }
+
+  /* diagram */
+  .diagram-card {
+    background: #ffffff; border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 18px; overflow-x: auto; box-shadow: var(--shadow); text-align: center;
+  }
+  .diagram-card .mermaid { display: inline-block; }
+  .diagram-caption { font-size: 13.5px; color: var(--text-muted); margin-top: 14px; }
+
+  /* team grid */
+  .team-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  @media (max-width: 720px) { .team-grid { grid-template-columns: 1fr; } }
+  .team-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; box-shadow: var(--shadow);
+  }
+  .team-card .num { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+  .team-card h3 { margin: 4px 0 8px; font-size: 15px; }
+  .team-card h3 code { font-size: 13.5px; }
+  .team-card p { margin: 0 0 8px; font-size: 13.5px; color: var(--text-muted); }
+  .team-card .out { font-size: 12px; color: var(--text-muted); }
+  .team-card .out code { background: var(--code-bg); padding: 1px 5px; border-radius: 5px; }
+  .team-card a.detail-link { font-size: 12.5px; }
+
+  code {
+    background: var(--code-bg); padding: 1px 6px; border-radius: 5px; font-size: 0.9em;
+  }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; overflow-x: auto; font-size: 13.5px;
+  }
+  pre code { background: none; padding: 0; }
+
+  /* skills */
+  .skill-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  @media (max-width: 900px) { .skill-grid { grid-template-columns: 1fr; } }
+  .skill-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 18px; box-shadow: var(--shadow); display: flex; flex-direction: column;
+  }
+  .skill-card h3 { margin: 0 0 4px; font-size: 15px; }
+  .skill-card .trigger { font-size: 12px; color: var(--accent2); margin-bottom: 10px; }
+  .skill-card p { font-size: 13.5px; color: var(--text-muted); margin: 0; flex: 1; }
+  .pill {
+    display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px;
+    background: var(--accent2-soft); color: var(--accent2); margin-top: 10px; width: fit-content;
+  }
+
+  ol, ul { padding-left: 22px; }
+  li { margin-bottom: 8px; font-size: 14.5px; }
+  .principles li { margin-bottom: 12px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--text-muted); font-weight: 600; }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); }
+  .table-wrap table { min-width: 640px; }
+
+  /* accordion */
+  details {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 16px; margin-bottom: 10px;
+  }
+  details[open] { box-shadow: var(--shadow); }
+  summary {
+    cursor: pointer; font-weight: 600; font-size: 14.5px; list-style: none;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; color: var(--text-muted); font-weight: 400; font-size: 18px; }
+  details[open] summary::after { content: "–"; }
+  .detail-body { margin-top: 12px; font-size: 13.5px; }
+  .detail-body dt { color: var(--text-muted); font-weight: 600; margin-top: 10px; }
+  .detail-body dd { margin: 4px 0 0; }
+
+  footer { padding: 32px 0 60px; color: var(--text-muted); font-size: 13px; }
+  footer a { color: var(--text-muted); text-decoration: underline; }
+  .footer-links { display: flex; gap: 14px; margin-top: 8px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand"><span class="dot"></span> payment-launch-orchestrator</div>
+    <nav class="navlinks">
+      <a href="#pipeline">파이프라인</a>
+      <a href="#team">팀 구성</a>
+      <a href="#skills">스킬</a>
+      <a href="#usage">사용법</a>
+      <a href="#principles">설계 원칙</a>
+      <a href="#agent-details">에이전트 상세</a>
+    </nav>
+    <button class="theme-toggle" id="themeToggle" type="button">테마</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <header class="hero">
+    <div class="badges">
+      <span class="badge">MIT License</span>
+      <span class="badge">Plugin v1.0.0</span>
+      <span class="badge">Claude Code 하네스</span>
+    </div>
+    <h1>결제/PG 서비스 출시를<br />10명의 AI 에이전트 팀이 준비합니다</h1>
+    <p class="lede">
+      기획부터 규제 준수 심층 검토, 논리·물리 아키텍처 설계, 트랜잭션 세션 설계, 운영 전략, 인터페이스 스펙,
+      점진적 QA, 구축 보고서까지 — 신규 결제/PG(Payment Gateway, 결제대행사) 서비스 출시에 필요한
+      <strong>설계 문서 세트</strong>를 한 번에 만드는 <a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a> 하네스입니다.
+    </p>
+    <p class="lede-sub">
+      QA 게이트는 아키텍처 설계 이후 5개 체크포인트에 적용되며, 그 앞의 기획·규제 심층 검토 단계에는 별도 게이트가 없습니다.
+    </p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://github.com/SeokRae/payment-orchestrator" target="_blank" rel="noopener">GitHub 저장소</a>
+      <a class="btn btn-ghost" href="#usage">사용법 바로가기</a>
+      <a class="btn btn-ghost" href="https://github.com/SeokRae/payment-orchestrator/blob/main/README.md" target="_blank" rel="noopener">전체 README</a>
+    </div>
+  </header>
+
+  <section id="facts">
+    <h2>시작 전에 알아두면 좋은 것</h2>
+    <p class="section-sub">전체 팀을 스폰하기 전에 이 4가지는 꼭 확인하세요.</p>
+    <div class="facts">
+      <div class="fact-card">
+        <h3>설계 문서만 만듭니다</h3>
+        <p>실제 코드 구현과 그 코드가 스펙대로 동작하는지 확인하는 "개발 QA"는 범위 밖입니다. 산출물은 완성본이 아니라 (미결)·(미확인)·(미확보) 표기가 남은 초안이며, 사람의 최종 확인이 필요합니다.</p>
+      </div>
+      <div class="fact-card">
+        <h3>규제 체크리스트는 한국 법제 기준</h3>
+        <p>전자금융거래법·특정금융정보법 등 리서치 시점의 한국 법제를 근거로 합니다. 해외 연동 시나리오도 다루지만 판단 근거 법령 자체는 한국 기준입니다.</p>
+      </div>
+      <div class="fact-card warn">
+        <h3>처음 실행할 땐 가볍지 않습니다</h3>
+        <p>신규 서비스로 트리거하면 10명 전원이 곧바로 스폰되는 전체 파이프라인이 실행됩니다. 정상 흐름 기준 에이전트 호출 약 22~24회, 수십 분~여러 시간 규모입니다. 가볍게 확인하려면 <code>compliance-review</code>·<code>qa-review</code>를 단독 트리거하세요. 이미 만든 서비스의 후속 요청(예: "제약분석만 다시")은 팀원 1명만 재소집되므로 예외입니다.</p>
+      </div>
+      <div class="fact-card">
+        <h3>확인 질문은 최대 3번</h3>
+        <p>시작 직후 역인터뷰, 아키텍처가 갈릴 때 옵션 선택, 보고서 확정 전 핵심 결정 확인 — 모두 게이트가 아닌 선택적 보강이라 응답하지 않아도 기본값으로 자동 진행됩니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="pipeline">
+    <h2>파이프라인 한눈에 보기</h2>
+    <p class="section-sub">
+      <code>planner</code> → <code>compliance</code> → <code>architect</code> → <strong>QA</strong> →
+      (<code>infra</code> ∥ <code>session</code> ∥ <code>ops</code>) → <strong>QA(각각)</strong> →
+      <code>spec</code>(session QA 통과 후) → <strong>QA</strong> → <code>reporter</code>(3개 QA 통과 후).
+      <code>adr</code>·<code>compliance</code>(2단계 이후)는 고정 순서 없이 전 팀원의 요청에 상시 응답합니다.
+    </p>
+    <div class="diagram-card">
+      <pre class="mermaid">
+flowchart TD
+    planner["planner<br/>기획·제약분석"] -->|G1| compliance["compliance<br/>규제 심층검토"]
+    compliance -->|G2| architect["architect<br/>논리 아키텍처"]
+    architect --> qa1{{"QA 체크포인트1<br/>아키텍처 정합성"}}
+    qa1 -->|G3| infra["infra<br/>물리 인프라"]
+    qa1 -->|G3| session["session<br/>세션 설계"]
+    qa1 -->|G3| ops["ops<br/>운영 전략"]
+    infra --> qa2{{"QA<br/>infra 정합성"}}
+    session --> qa3{{"QA<br/>session 정합성"}}
+    ops --> qa4{{"QA<br/>ops 정합성"}}
+    qa3 -->|G4| spec["spec<br/>인터페이스 스펙"]
+    spec --> qa5{{"QA<br/>spec 정합성"}}
+    qa2 -->|G5| reporter["reporter<br/>구축 보고서"]
+    qa4 -->|G5| reporter
+    qa5 -->|G5| reporter
+
+    adr[["adr — 상시 대기(on-call)"]]
+    compliance2[["compliance — 2단계 이후 상시 대기(on-call)"]]
+      </pre>
+      <p class="diagram-caption">오케스트레이터는 <code>skills/launch-orchestrator/SKILL.md</code> 하나입니다. 팀 구성·착수 게이트(G1~G5)·에러 핸들링을 정의하며, 리더 역할은 별도 에이전트 없이 세션 자체가 맡습니다.</p>
+    </div>
+  </section>
+
+  <section id="team">
+    <h2>팀 구성 — 10명의 에이전트</h2>
+    <p class="section-sub">각 카드를 눌러 상세 항목(착수 조건·핵심 원칙·협업 관계)으로 바로 이동할 수 있습니다.</p>
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="num">01</div>
+        <h3><code>payment-planner</code></h3>
+        <p>킥오프(사업배경·이해관계자) + 제약분석(H/M/L 등급). 팀의 시작점.</p>
+        <p class="out">출력 <code>docs/kickoff/</code>, <code>docs/constraints/</code></p>
+        <a class="detail-link" href="#agent-1">상세 보기 →</a>
+      </div>
+      <div class="team-card">
+        <div class="num">02</div>
+        <h3><code>payment-compliance-analyst</code></h3>
+        <p>규제 준수 심층 검토(전자금융거래법·PCI-DSS·개인정보보호법·특금법·해외연동) 1회 + 상시 대기.</p>
+        <p class="out">출력 <code>docs/constraints/</code> (02번 보강)</p>
+        <a class="detail-link" href="#agent-2">상세 보기 →</a>
+      </div>
+      <div class="team-card">
+        <div class="num">03</div>
+        <h3><code>payment-architect</code></h3>
+        <p>논리 컴포넌트 아키텍처 설계 — 경계·인증/승인/정산 흐름. 구조가 갈리면 옵션 제시 후 확정.</p>
+        <p class="out">출력 <code>docs/architecture/01-*</code></p>
+        <a class="detail-link" href="#agent-3">상세 보기 →</a>
+      </div>
+      <div class="team-card">
+        <div class="num">04</div>
+        <h3><code>payment-infra-builder</code></h3>
+        <p>네트워크 인프라 레벨 문서화 — 서버 사이징·이중화·존·DR. 바로 구축에 쓸 수 있는 기준 문서.</p>
+        <p class="out">출력 <code>docs/architecture/02-*-인프라-사이징.md</code></p>
+        <a class="detail-link" href="#agent-4">상세 보기 →</a>
+      </div>
+      <div class="team-card">
+        <div class="num">05</div>
+        <h3><code>payment-session-designer</code></h3>
+        <p>트랜잭션 세션 시나리오 설계 — 승인·취소·구독·가상계좌·웹훅 등.</p>
+        <p class="out">출력 <code>docs/session-design/</code></p>
+        <a class="detail-link" href="#agent-5">상세 보기 →</a>
+      </div>
+      <div class="team-card">
+        <div class="num">06</div>
+        <h3><code>payment-ops-designer</code></h3>
+        <p>정산·모니터링·이슈대응·테스트 전략.</p>
+        <p class="out">출력 <code>docs/operations/</code></p>
+        <a class="detail-link" href="#agent-6">상세 보기 →</a>
+      </div>
+      <div class="team-card">
+        <div class="num">07</div>
+        <h3><code>payment-spec-writer</code></h3>
+        <p>인터페이스·API 스펙 — 통신 방향 표를 실제 엔드포인트로 구체화.</p>
+        <p class="out">출력 <code>docs/specs/</code></p>
+        <a class="detail-link" href="#agent-7">상세 보기 →</a>
+      </div>
+      <div class="team-card">
+        <div class="num">08</div>
+        <h3><code>payment-launch-qa</code></h3>
+        <p>생산자 완료 직후 경계면 교차검증(생성-검증 게이트). 불일치는 즉시 되돌려보냄(무진행 감지까지 반복).</p>
+        <p class="out">출력 <code>_launch-workspace/qa/</code> (문서 산출물 아님)</p>
+        <a class="detail-link" href="#agent-8">상세 보기 →</a>
+      </div>
+      <div class="team-card">
+        <div class="num">09</div>
+        <h3><code>payment-decision-recorder</code></h3>
+        <p>되돌리기 어려운 결정을 ADR로 기록. 상시 대기(on-call).</p>
+        <p class="out">출력 <code>docs/adr/</code></p>
+        <a class="detail-link" href="#agent-9">상세 보기 →</a>
+      </div>
+      <div class="team-card">
+        <div class="num">10</div>
+        <h3><code>payment-launch-reporter</code></h3>
+        <p>전 팀원 산출물 + QA 결과를 구축 보고서로 종합. 핵심 결정 확인 후 확정.</p>
+        <p class="out">출력 <code>docs/reports/</code></p>
+        <a class="detail-link" href="#agent-10">상세 보기 →</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="skills">
+    <h2>스킬 3개</h2>
+    <p class="section-sub"><code>compliance-review</code>·<code>qa-review</code>는 팀 전체를 돌리지 않고 단독으로도 쓸 수 있습니다 — 오케스트레이터 안에서 각각 compliance·qa 팀원이 내부적으로 호출하는 것과 동일한 스킬입니다.</p>
+    <div class="skill-grid">
+      <div class="skill-card">
+        <h3><code>launch-orchestrator</code></h3>
+        <div class="trigger">"신규 결제 서비스 출시", "PG 서비스 구축 하네스"</div>
+        <p>팀 전체를 조율하는 메인 스킬 — 10명 스폰, 착수 게이트 G1~G5 관리, 부분 재실행(특정 팀원만 재작업) 처리.</p>
+        <span class="pill">오케스트레이터</span>
+      </div>
+      <div class="skill-card">
+        <h3><code>compliance-review</code></h3>
+        <div class="trigger">"규제 검토", "PG 등록 대상인지 확인"</div>
+        <p>전자금융거래법·PCI-DSS·개인정보보호법·특정금융정보법(특금법)·해외 PSP 연동(외국환거래법·GDPR) 5개 규제 도메인을 77개 체크리스트 항목으로 H/M/L 등급 판정. <strong>법률 자문이 아닙니다.</strong></p>
+        <span class="pill">단독 트리거 가능</span>
+      </div>
+      <div class="skill-card">
+        <h3><code>qa-review</code></h3>
+        <div class="trigger">"설계 문서 정합성 검증", "QA 해줘"</div>
+        <p>설계 문서 간 경계면 교차검증(PASS/FIX/GAP 판정). "문서 QA"만 다루며, 코드가 스펙대로 동작하는지 확인하는 "개발 QA"는 범위 밖입니다.</p>
+        <span class="pill">단독 트리거 가능</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="usage">
+    <h2>사용법</h2>
+    <ol>
+      <li>
+        설치 — 상황에 맞게 고르세요.
+        <ul>
+          <li><strong>플러그인으로 설치</strong> (여러 프로젝트에서 재사용할 계획이면 권장): 플러그인 이름은 <code>payments</code>이며, 설치되면 스킬은 <code>payments:launch-orchestrator</code> 형태로 노출됩니다.
+            <pre><code>claude plugin marketplace add &lt;이 저장소 경로 또는 git URL&gt;
+claude plugin install payments@sr</code></pre>
+            또는 등록 없이 바로 로드: <code>claude --plugin-dir &lt;이 저장소 경로&gt;</code>
+          </li>
+          <li><strong>디렉터리 복사</strong> (지금 이 프로젝트 하나에서만 빠르게 써보려면 더 간단): <code>agents/</code>·<code>skills/</code> 안의 파일들을 대상 프로젝트의 <code>.claude/agents/</code>·<code>.claude/skills/</code>로 복사합니다.</li>
+        </ul>
+      </li>
+      <li>
+        세션에 입력합니다.
+        <pre><code>새 결제 서비스 'xyz-pay' 출시 준비 문서 만들어줘 — 해외 카드사 다이렉트 연동, Q3 목표</code></pre>
+      </li>
+      <li><code>launch-orchestrator</code> 스킬이 트리거되어 10명 팀이 자동으로 조율하며 작업합니다.</li>
+      <li>결과는 <code>{service-root}/docs/{kickoff,constraints,architecture,session-design,operations,specs,adr,reports}/</code>에 생성됩니다. <code>{service-root}</code>는 최초 실행 시 하네스가 직접 물어보며 정합니다.</li>
+    </ol>
+    <p><strong>후속 작업:</strong> 이미 만든 서비스에 대해 "제약분석만 다시", "아키텍처 수정해줘" 같은 요청도 같은 스킬이 처리합니다 — 영향받는 팀원만 골라 재실행합니다(전체 팀 재소집 아님).</p>
+  </section>
+
+  <section id="prereq">
+    <h2>전제 조건</h2>
+    <p>이 하네스는 문서를 어디에 둘지 <strong>특정 폴더 구조를 강제하지 않습니다.</strong> 오케스트레이터 Phase 0가 실행 시점에 <code>{service-root}</code>를 프로젝트 컨벤션에서 찾거나, 없으면 사용자에게 직접 물어서 정합니다.</p>
+    <p><strong>외부 플러그인·노트 앱에 전혀 의존하지 않습니다.</strong> Obsidian이 설치돼 있을 필요도, 다른 노트 도구가 있을 필요도 없습니다 — 문서 구조는 표준 폴더와 각 문서 최상단의 <code>#&nbsp;제목</code> 헤더, 표준 마크다운만으로 자기완결적으로 구성됩니다. 특수 프론트매터 필드나 wiki-link(<code>[[...]]</code>) 문법도 쓰지 않습니다.</p>
+  </section>
+
+  <section id="scope">
+    <h2>설계 범위 — "문서 QA"와 "개발 QA"</h2>
+    <p>이 하네스는 <strong>설계 문서만</strong> 다룹니다. <code>payment-launch-qa</code>가 하는 검증은 "세션설계 시나리오가 스펙에 API로 다 옮겨졌나" 같은 문서 대 문서 정합성이며, <strong>실제로 구현된 코드가 그 스펙대로 동작하는지는 확인하지 않습니다.</strong> 코드는 이 저장소 밖의 별도 코드베이스에 있고, 그건 별도의 개발+QA 하네스가 필요한 영역입니다. <code>payment-ops-designer</code>가 만드는 "테스트 전략" 문서가 그 다음 단계(개발 QA)로 넘어가는 핸드오프 산출물 역할을 합니다.</p>
+  </section>
+
+  <section id="principles">
+    <h2>설계 원칙</h2>
+    <ul class="principles">
+      <li><strong>생산자와 검증자를 분리한다</strong> — <code>payment-launch-qa</code>는 문서를 만들지 않고 교차검증만 합니다. 스스로 만든 문서를 스스로 검증하면 놓치는 게 그대로 남습니다.</li>
+      <li><strong>점진적 QA</strong> — 전체 완성 후 한 번에 몰아서 검증하지 않고, 각 생산자가 끝나는 즉시 바로 확인합니다. 문제를 일찍 잡을수록 되돌리는 비용이 작습니다.</li>
+      <li><strong>재시도는 진행이 있는 한 계속한다</strong> — QA 재검증은 고정 횟수 상한이 아니라 무진행 감지로 종료 시점을 정합니다. 더 이상 나아지지 않는 지점에서는 강제 통과 처리 후 미결로 남깁니다. 무한 루프보다 "사람이 확인할 목록"을 남기는 쪽을 택합니다.</li>
+      <li><strong>역할이 다르면 에이전트를 분리한다</strong> — 인프라 구축(물리·실행형)과 어플리케이션 설계(논리·문서형)는 성격이 다르다는 판단으로 별도 에이전트로 나눴습니다. 규제·정책 판단도 마찬가지로 전문화했습니다.</li>
+      <li><strong>스킬(어떻게)과 에이전트(누가)를 분리한다</strong> — 규제 판단 로직과 QA 판정 로직은 독립 스킬로 빼서, 팀 밖에서 단독으로도 쓸 수 있게 했습니다.</li>
+      <li><strong>사용자 확인 왕복은 게이트가 아니다</strong> — 역인터뷰·아키텍처 옵션 제시·핵심 결정 확인 모두 착수 순서를 강제하는 게이트(G1~G5)와는 성격이 다릅니다. 답하지 않아도 기본값으로 자동 진행되어 파이프라인을 막지 않습니다.</li>
+    </ul>
+  </section>
+
+  <section id="agent-details">
+    <h2>에이전트 상세</h2>
+    <p class="section-sub">
+      에이전트는 <strong>"누가 하는가"</strong>(역할·권한이 고정된 팀원, 스폰되면 독립된 컨텍스트에서 작업),
+      스킬은 <strong>"어떻게 하는가"</strong>(여러 호출자가 공유해 꺼내 쓰는 절차서)입니다.
+    </p>
+
+    <details id="agent-1">
+      <summary>1. payment-planner — 기획·제약분석</summary>
+      <dl class="detail-body">
+        <dt>착수 조건</dt><dd>없음 — 팀의 시작점</dd>
+        <dt>핵심 역할</dt><dd>사업 배경·목표·이해관계자 킥오프 문서 + H/M/L 등급 제약분석</dd>
+        <dt>핵심 원칙</dt><dd>착수 차단급(H) 제약을 최우선 표면화, 심층 규제 판단은 compliance에 위임, 미확인 값은 추정하지 않고 "(미결)" 표기</dd>
+        <dt>입력 → 출력</dt><dd>사용자 제공 서비스 개요 → <code>docs/kickoff/</code>, <code>docs/constraints/01-*</code></dd>
+        <dt>주요 협업</dt><dd>완료 즉시 H급 제약·확정 스코프를 compliance에 전달(G1 구현)</dd>
+        <dt>원본 파일</dt><dd><a href="https://github.com/SeokRae/payment-orchestrator/blob/main/agents/payment-planner.md" target="_blank" rel="noopener">agents/payment-planner.md</a></dd>
+      </dl>
+    </details>
+
+    <details id="agent-2">
+      <summary>2. payment-compliance-analyst — 규제 준수 심층 검토</summary>
+      <dl class="detail-body">
+        <dt>착수 조건</dt><dd>G1 — planner의 킥오프+제약분석 완료</dd>
+        <dt>핵심 역할</dt><dd>5개 규제 도메인(전자금융거래법·PCI-DSS·개인정보보호법·특금법·해외연동) 심층 검토 1회, 이후 전 팀원 규제 질의에 상시 대기</dd>
+        <dt>핵심 원칙</dt><dd>법률 자문 아님 caveat 명시, <code>compliance-review</code> 스킬 체크리스트만 근거로 판정(자체 지식으로 새 규제 판단 생성 금지)</dd>
+        <dt>입력 → 출력</dt><dd><code>docs/constraints/01-*</code> → <code>docs/constraints/02-*</code>(H급 규제 항목·법무 확인 필요 목록 포함)</dd>
+        <dt>주요 협업</dt><dd>완료 시 H급 규제 항목을 architect에 전달(G2 구현 — 이 팀의 핵심 안전장치)</dd>
+        <dt>원본 파일</dt><dd><a href="https://github.com/SeokRae/payment-orchestrator/blob/main/agents/payment-compliance-analyst.md" target="_blank" rel="noopener">agents/payment-compliance-analyst.md</a></dd>
+      </dl>
+    </details>
+
+    <details id="agent-3">
+      <summary>3. payment-architect — 논리 컴포넌트 아키텍처</summary>
+      <dl class="detail-body">
+        <dt>착수 조건</dt><dd>G2 — compliance 산출물에 "법무 확인 필요 목록" 섹션 존재</dd>
+        <dt>핵심 역할</dt><dd>논리 컴포넌트 구조 + 컴포넌트 간 통신 방향(호출 방향·동기/비동기) 정의. 물리 인프라는 다루지 않음. 구조가 하류 4개 기준 중 2개 이상에서 갈리면 확정 전 사용자에게 옵션 제시(사용자 확인 왕복 UC2)</dd>
+        <dt>핵심 원칙</dt><dd>경계는 기본값으로 트랜잭션 상태 전이 기준을 따르되 절대 규칙은 아님, 구체적 엔드포인트 시그니처는 확정하지 않고 spec에 기준선만 전달</dd>
+        <dt>입력 → 출력</dt><dd><code>docs/constraints/</code>(제약+규제) → <code>docs/architecture/01-*</code></dd>
+        <dt>주요 협업</dt><dd>옵션 제시가 있었다면 왕복 종료 후, 없었다면 설계 완료 즉시 infra·session·ops 3명에게 동시 전달(팬아웃 트리거)</dd>
+        <dt>원본 파일</dt><dd><a href="https://github.com/SeokRae/payment-orchestrator/blob/main/agents/payment-architect.md" target="_blank" rel="noopener">agents/payment-architect.md</a></dd>
+      </dl>
+    </details>
+
+    <details id="agent-4">
+      <summary>4. payment-infra-builder — 물리 인프라 설계</summary>
+      <dl class="detail-body">
+        <dt>착수 조건</dt><dd>G3 — QA 체크포인트1(아키텍처 정합성) 완결, session·ops와 3갈래 병렬</dd>
+        <dt>핵심 역할</dt><dd>서버 사이징·이중화·존 구성·DR을 "바로 구축에 쓰는 단일 기준 문서"로 관리(설계와 실행을 분리하지 않음)</dd>
+        <dt>핵심 원칙</dt><dd>이중화는 기본값이 아니라 결정 사항(미확정이면 ADR 요청), 트래픽 근거 없이 서버 대수를 지어내지 않음</dd>
+        <dt>입력 → 출력</dt><dd>architect 컴포넌트 구조 + compliance DR/이중화 규제 판정 → <code>docs/architecture/02-*</code></dd>
+        <dt>주요 협업</dt><dd>ops와 서버 존 구성 ↔ 운영 전환 일정 상호 확인</dd>
+        <dt>원본 파일</dt><dd><a href="https://github.com/SeokRae/payment-orchestrator/blob/main/agents/payment-infra-builder.md" target="_blank" rel="noopener">agents/payment-infra-builder.md</a></dd>
+      </dl>
+    </details>
+
+    <details id="agent-5">
+      <summary>5. payment-session-designer — 트랜잭션 세션 설계</summary>
+      <dl class="detail-body">
+        <dt>착수 조건</dt><dd>G3, infra·ops와 3갈래 병렬</dd>
+        <dt>핵심 역할</dt><dd>승인·취소·구독·가상계좌·웹훅 등 시나리오별 요청-응답 시퀀스 + 예외 흐름 설계</dd>
+        <dt>핵심 원칙</dt><dd>정상 흐름만 그리지 않음(타임아웃·중복요청·웹훅유실 등 예외 필수 포함), architect 경계 밖 컴포넌트를 임의로 추가하지 않음</dd>
+        <dt>입력 → 출력</dt><dd><code>docs/architecture/</code> → <code>docs/session-design/</code></dd>
+        <dt>주요 협업</dt><dd>spec의 직접 상류(하드 의존) — 이 팀원의 QA 통과가 G4(spec 착수)의 조건</dd>
+        <dt>원본 파일</dt><dd><a href="https://github.com/SeokRae/payment-orchestrator/blob/main/agents/payment-session-designer.md" target="_blank" rel="noopener">agents/payment-session-designer.md</a></dd>
+      </dl>
+    </details>
+
+    <details id="agent-6">
+      <summary>6. payment-ops-designer — 운영·정산·테스트 전략</summary>
+      <dl class="detail-body">
+        <dt>착수 조건</dt><dd>G3, infra·session과 3갈래 병렬</dd>
+        <dt>핵심 역할</dt><dd>정산 전략·모니터링/알람·이슈대응 프로세스·테스트 전략·운영 전환 로드맵</dd>
+        <dt>핵심 원칙</dt><dd>정산 정합성은 "승인 건수=정산 건수"가 아니라 상태 전이 정합성으로 검증, 테스트 전략은 향후 "개발 QA" 핸드오프 산출물이므로 실행 가능한 구체성까지 요구</dd>
+        <dt>입력 → 출력</dt><dd><code>docs/architecture/</code> → <code>docs/operations/</code></dd>
+        <dt>주요 협업</dt><dd>infra와 존 구성 ↔ 운영 로드맵 상호 확인, session과 타임아웃 값 상호 확인</dd>
+        <dt>원본 파일</dt><dd><a href="https://github.com/SeokRae/payment-orchestrator/blob/main/agents/payment-ops-designer.md" target="_blank" rel="noopener">agents/payment-ops-designer.md</a></dd>
+      </dl>
+    </details>
+
+    <details id="agent-7">
+      <summary>7. payment-spec-writer — 인터페이스·API 스펙</summary>
+      <dl class="detail-body">
+        <dt>착수 조건</dt><dd>G4 — session의 QA(세션설계 정합성) 완결</dd>
+        <dt>핵심 역할</dt><dd>architect의 통신 방향 표를 실제 엔드포인트(URL·메서드·요청/응답 필드)로 구체화 + 외부연동 규격 + 구현 API 리스트</dd>
+        <dt>핵심 원칙</dt><dd>session 시나리오에 없는 API를 임의로 추가하지 않음(먼저 session에 확인), 외부연동 미확보 필드는 "(미확보)"로 표기</dd>
+        <dt>입력 → 출력</dt><dd><code>docs/session-design/</code> + architect 통신방향 표 → <code>docs/specs/</code></dd>
+        <dt>주요 협업</dt><dd>session의 직접 하류(단독 실행 불가)</dd>
+        <dt>원본 파일</dt><dd><a href="https://github.com/SeokRae/payment-orchestrator/blob/main/agents/payment-spec-writer.md" target="_blank" rel="noopener">agents/payment-spec-writer.md</a></dd>
+      </dl>
+    </details>
+
+    <details id="agent-8">
+      <summary>8. payment-launch-qa — 설계 문서 정합성 검증</summary>
+      <dl class="detail-body">
+        <dt>착수 조건</dt><dd>게이트 없음 — architect·infra·session·ops·spec 각 완료 직후 자동 트리거(5개 체크포인트)</dd>
+        <dt>핵심 역할</dt><dd><code>qa-review</code> 스킬로 경계면 교차검증 수행, PASS/FIX/GAP 판정</dd>
+        <dt>핵심 원칙</dt><dd>"존재 확인"이 아니라 "교차 비교", 재검증은 무진행(그 항목에 이미 나온 적 있는 지적이 다시 등장하거나 체크포인트 전체가 2라운드 연속 정체) 감지 시 강제 PASS, REDO급 불일치는 판정 없이 즉시 리더 에스컬레이션</dd>
+        <dt>입력 → 출력</dt><dd>인접 문서 쌍 → <code>_launch-workspace/qa/{NN}-*.md</code>(<code>docs/</code>에는 쓰지 않음 — 감사 기록)</dd>
+        <dt>주요 협업</dt><dd>FIX/GAP 시 해당 생산자에게 직접 통지, 불일치가 미결정 때문이면 결정 확정 책임자(관련 생산자, 애매하면 리더)에게 먼저 확정을 요청한 뒤 adr에게 기록을 요청하고 재검증</dd>
+        <dt>원본 파일</dt><dd><a href="https://github.com/SeokRae/payment-orchestrator/blob/main/agents/payment-launch-qa.md" target="_blank" rel="noopener">agents/payment-launch-qa.md</a></dd>
+      </dl>
+    </details>
+
+    <details id="agent-9">
+      <summary>9. payment-decision-recorder — ADR 기록(adr)</summary>
+      <dl class="detail-body">
+        <dt>착수 조건</dt><dd>고정 게이트 없음 — 전 팀원 요청에 상시 대기(on-call)</dd>
+        <dt>핵심 역할</dt><dd>되돌리기 어려운 결정을 ADR로 구조화, 상태(<code>proposed</code>→<code>accepted</code>/<code>rejected</code>/<code>superseded</code>) 관리</dd>
+        <dt>핵심 원칙</dt><dd>"되돌리기 어려운가"만 기록 기준(사소한 선택은 반려), 번호는 순차 증가·재사용 금지, 상충 시 삭제 대신 <code>superseded</code> 처리</dd>
+        <dt>입력 → 출력</dt><dd>팀원의 결정 컨텍스트 요청 → <code>docs/adr/adr-{NNN}-*.md</code></dd>
+        <dt>주요 협업</dt><dd>reporter가 보고서 초안 작성 착수 시점에 ADR 전체 목록(상태 포함)을 요청</dd>
+        <dt>원본 파일</dt><dd><a href="https://github.com/SeokRae/payment-orchestrator/blob/main/agents/payment-decision-recorder.md" target="_blank" rel="noopener">agents/payment-decision-recorder.md</a></dd>
+      </dl>
+    </details>
+
+    <details id="agent-10">
+      <summary>10. payment-launch-reporter — 구축 보고서 종합</summary>
+      <dl class="detail-body">
+        <dt>착수 조건</dt><dd>G5 — 인프라·운영·스펙 3개 QA 체크포인트 모두 완결</dd>
+        <dt>핵심 역할</dt><dd>전 산출물 + QA 결과 + ADR 이력을 표준 목차(배경/개요/아키텍처요약/로드맵/현황/리스크레지스터/주요의사결정)로 종합. 초안 완성 후 영향이 큰 ADR 1~3개를 사용자에게 되물어 이해도를 확인(사용자 확인 왕복 UC3)하고 필요하면 해설을 보강한 뒤 확정</dd>
+        <dt>핵심 원칙</dt><dd>개별 문서 복붙 금지(관점 재구성), 리스크 레지스터는 전 팀원 미결 항목을 누락 없이 통합, "ADR 필요 여부 검토함" 문구와 adr의 실제 목록을 대조해 누락 감지</dd>
+        <dt>입력 → 출력</dt><dd><code>docs/{kickoff..specs,adr}/</code> + QA 기록 → <code>docs/reports/{service-slug}-플랫폼-구축-보고서.md</code></dd>
+        <dt>주요 협업</dt><dd>팀의 마지막 단계(확정본 기준) — 리더가 이 산출물을 최종 결과로 사용자에게 보고</dd>
+        <dt>원본 파일</dt><dd><a href="https://github.com/SeokRae/payment-orchestrator/blob/main/agents/payment-launch-reporter.md" target="_blank" rel="noopener">agents/payment-launch-reporter.md</a></dd>
+      </dl>
+    </details>
+  </section>
+
+  <footer>
+    <div>payment-launch-orchestrator — MIT License</div>
+    <div class="footer-links">
+      <a href="https://github.com/SeokRae/payment-orchestrator" target="_blank" rel="noopener">GitHub 저장소</a>
+      <a href="https://github.com/SeokRae/payment-orchestrator/blob/main/README.md" target="_blank" rel="noopener">README</a>
+      <a href="https://github.com/SeokRae/payment-orchestrator/blob/main/CHANGELOG.md" target="_blank" rel="noopener">CHANGELOG</a>
+      <a href="https://github.com/SeokRae/payment-orchestrator/blob/main/LICENSE" target="_blank" rel="noopener">LICENSE</a>
+    </div>
+  </footer>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose", fontFamily: "inherit" });
+
+  (function () {
+    var root = document.documentElement;
+    var toggle = document.getElementById("themeToggle");
+    var stored = localStorage.getItem("theme");
+    if (stored) root.setAttribute("data-theme", stored);
+
+    function current() {
+      var attr = root.getAttribute("data-theme");
+      if (attr) return attr;
+      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    }
+    function render() {
+      toggle.textContent = current() === "dark" ? "라이트 모드" : "다크 모드";
+    }
+    toggle.addEventListener("click", function () {
+      var next = current() === "dark" ? "light" : "dark";
+      root.setAttribute("data-theme", next);
+      localStorage.setItem("theme", next);
+      render();
+    });
+    render();
+  })();
+</script>
+</body>
+</html>
