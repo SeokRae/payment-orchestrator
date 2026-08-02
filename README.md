@@ -22,7 +22,7 @@
 | [`payment-session-designer`](agents/payment-session-designer.md) | 트랜잭션 세션 시나리오 설계 (승인·취소·구독·가상계좌·웹훅 등) | `docs/session-design/` |
 | [`payment-ops-designer`](agents/payment-ops-designer.md) | 정산·모니터링·이슈대응·테스트 전략 | `docs/operations/` |
 | [`payment-spec-writer`](agents/payment-spec-writer.md) | 인터페이스·API 스펙 | `docs/specs/` |
-| [`payment-launch-qa`](agents/payment-launch-qa.md) | 생산자 완료 직후 경계면 교차검증(생성-검증 게이트), 불일치는 즉시 되돌려보냄(최대 2회) | `{service-root}/_launch-workspace/qa/` (문서 산출물 아님) |
+| [`payment-launch-qa`](agents/payment-launch-qa.md) | 생산자 완료 직후 경계면 교차검증(생성-검증 게이트), 불일치는 즉시 되돌려보냄(무진행 감지까지 반복) | `{service-root}/_launch-workspace/qa/` (문서 산출물 아님) |
 | [`payment-decision-recorder`](agents/payment-decision-recorder.md) | 되돌리기 어려운 결정을 ADR로 기록, 상시 대기 | `docs/adr/` |
 | [`payment-launch-reporter`](agents/payment-launch-reporter.md) | 전 팀원 산출물 + QA 결과를 구축 보고서로 종합 | `docs/reports/` |
 
@@ -79,7 +79,7 @@
 
 - **생산자와 검증자를 분리한다** — `payment-launch-qa`는 문서를 만들지 않고 교차검증만 합니다. 스스로 만든 문서를 스스로 검증하면 놓치는 게 그대로 남습니다.
 - **점진적 QA** — 전체 완성 후 한 번에 몰아서 검증하지 않고, 각 생산자가 끝나는 즉시 바로 확인합니다. 문제를 일찍 잡을수록 되돌리는 비용이 작습니다.
-- **재시도에는 상한이 있다** — QA 재검증은 최대 2회, 초과하면 강제 통과 처리 후 미결로 남깁니다. 무한 루프보다 "사람이 확인할 목록"을 남기는 쪽을 택합니다.
+- **재시도는 진행이 있는 한 계속한다** — QA 재검증은 고정 횟수 상한이 아니라 무진행 감지로 종료 시점을 정합니다. 항목 단위로는 그 항목에 이미 한 번 나왔던 것과 동일한 지적이 다시 등장하면(직전 라운드가 아니어도 해당) 그 항목만, 체크포인트 단위로는 남은 불일치 항목 수가 2라운드 연속 나아지지 않으면 전체를 무진행으로 봅니다. "충분히 구체화됐다"는 판정을 횟수보다 우선하되, 더 이상 나아지지 않는 지점에서는 강제 통과 처리 후 미결로 남깁니다. 무한 루프보다 "사람이 확인할 목록"을 남기는 쪽을 택합니다.
 - **역할이 다르면 에이전트를 분리한다** — 인프라 구축(물리·실행형)과 어플리케이션 설계(논리·문서형)는 성격이 다르다는 판단으로 별도 에이전트로 나눴습니다. 규제·정책 판단도 마찬가지로 전문화했습니다.
 - **스킬(어떻게)과 에이전트(누가)를 분리한다** — 규제 판단 로직(`compliance-review`)과 QA 판정 로직(`qa-review`)은 독립 스킬로 빼서, 팀 밖에서 단독으로도 쓸 수 있게 했습니다.
 
@@ -139,9 +139,9 @@
 ### 8. [`payment-launch-qa`](agents/payment-launch-qa.md) — 설계 문서 정합성 검증
 - **착수 조건**: 게이트 없음 — architect·infra·session·ops·spec 각 완료 직후 자동 트리거(5개 체크포인트)
 - **핵심 역할**: `qa-review` 스킬로 경계면 교차검증 수행, PASS/FIX/GAP 판정
-- **핵심 원칙**: "존재 확인"이 아니라 "교차 비교", 재검증 최대 2회 후 강제 PASS, REDO급 불일치는 판정 없이 즉시 리더 에스컬레이션
+- **핵심 원칙**: "존재 확인"이 아니라 "교차 비교", 재검증은 무진행(그 항목에 이미 나온 적 있는 지적이 다시 등장 — 직전 라운드가 아니어도 해당 — 또는 체크포인트 전체가 2라운드 연속 정체) 감지 시 강제 PASS, REDO급 불일치는 판정 없이 즉시 리더 에스컬레이션
 - **입력 → 출력**: 인접 문서 쌍 → `_launch-workspace/qa/{NN}-*.md`(`docs/`에는 쓰지 않음 — 감사 기록)
-- **주요 협업**: FIX/GAP 시 해당 생산자에게 직접 SendMessage, 불일치가 미결정 때문이면 adr에 먼저 기록 요청 후 재검증
+- **주요 협업**: FIX/GAP 시 해당 생산자에게 직접 SendMessage, 불일치가 미결정 때문이면 adr에 바로 요청하지 않고 결정 확정 책임자(관련 생산자, 애매하면 리더)에게 먼저 확정을 요청한 뒤 확정된 내용으로 adr에게 기록을 요청하고 재검증
 
 ### 9. [`payment-decision-recorder`](agents/payment-decision-recorder.md) — ADR 기록(adr)
 - **착수 조건**: 고정 게이트 없음 — 전 팀원 SendMessage에 상시 대기(on-call)

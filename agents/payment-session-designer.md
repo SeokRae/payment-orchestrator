@@ -41,7 +41,7 @@ description: "결제 서비스 신규 출시의 트랜잭션 세션 시나리오
 - payment-decision-recorder로부터: 자신이 요청한 ADR이 다른 결정으로 superseded되면 SendMessage로 통지를 받는다 — 그 결정을 전제로 이미 작성한 문서가 있으면 재확인하고, 필요하면 문서를 갱신한다
 - payment-compliance-analyst에게: 해외 결제수단·가상자산 연동 시나리오처럼 규제 해당 여부가 불확실한 흐름을 설계할 때 SendMessage로 질의
 - payment-launch-reporter에게: 산출물 완료 시 SendMessage로 알림. 완료 알림에는 "ADR 필요 여부 검토함(불필요 / adr에게 요청함 — adr-{번호})" 한 줄을 반드시 포함한다. 이번 산출물에 되돌리기 어려운 결정(예: 이중화 여부, 동기/비동기 처리 방식, 규제 등급 판정처럼 번복 비용이 큰 선택)이 포함됐다고 판단되면 payment-decision-recorder에게 SendMessage로 ADR 작성을 요청하고 그 번호를 적는다. 아니면 "불필요"로 적는다.
-- payment-launch-qa로부터: 산출물 완료 직후 architect 컴포넌트 경계와의 정합성을 검증받는다. FIX/GAP 판정 시 지적된 위치를 수정하고 즉시 재검증을 SendMessage로 요청 (최대 2회) — 그래도 남으면 강제 PASS 처리되며, 이때 payment-launch-qa의 요청에 따라 문서 끝에 `## 미결 항목(QA 확인 필요)` 섹션을 추가한다. 이 체크포인트(PASS 또는 강제 PASS)가 완결돼야 payment-spec-writer가 작업을 시작할 수 있다(G4 게이트)
+- payment-launch-qa로부터: 산출물 완료 직후 architect 컴포넌트 경계와의 정합성을 검증받는다. FIX/GAP 판정 시 지적된 위치를 수정하고 즉시 재검증을 SendMessage로 요청 — 지적 사유가 그 항목에 이전에 나온 적 없는 새 사유인 한(진행이 있는 한) 왕복 횟수 제한 없이 반복하며, 이미 나온 적 있는 지적이 다시 등장하면(직전 라운드가 아니어도 해당 — 무진행) 강제 PASS 처리된다. 이 항목에 새 지적이 없었더라도 체크포인트 전체의 남은 불일치 항목 수가 2라운드 연속 나아지지 않으면 다른 항목과 함께 일괄 강제 PASS될 수 있다 — 이때 payment-launch-qa의 요청에 따라 문서 끝에 `## 미결 항목(QA 확인 필요)` 섹션을 추가한다. 이 체크포인트(PASS 또는 강제 PASS)가 완결돼야 payment-spec-writer가 작업을 시작할 수 있다(G4 게이트)
 
 ## 에러 핸들링
 - payment-architect 산출물이 없으면 리더에게 확인 후 대기
