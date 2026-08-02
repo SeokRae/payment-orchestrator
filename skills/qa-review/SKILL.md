@@ -30,7 +30,7 @@ launch-orchestrator 팀에서는 각 생산자가 완료되는 즉시 해당 행
 
 | # | 체크포인트 | 비교 대상 | 확인 기준 |
 |---|-----------|----------|----------|
-| 1 | architect 완료 직후 | compliance의 H급 규제 항목 ↔ architect 컴포넌트 설계 | H급 규제(예: PAN 비저장 강제)가 실제 컴포넌트 구조에 반영됐는가, 조용히 무시된 항목은 없는가 |
+| 1 | architect 완료 직후 | compliance의 H급 규제 항목 ↔ architect 컴포넌트 설계 | H급 규제(예: PAN 비저장 강제)가 실제 컴포넌트 구조에 반영됐는가, 조용히 무시된 항목은 없는가. **검증 대상은 확정 산출물(`01-{service-slug}-컴포넌트-역할-정의.md`)뿐이다 — architect가 사용자 확인 왕복(UC2)으로 `_launch-workspace/user-checkpoints/`에 남긴 옵션 스케치는 미확정 초안이므로 QA 검증 대상이 아니다** |
 | 2 | infra 완료 직후 | architect 컴포넌트 목록 + compliance의 DR·이중화 판정 ↔ infra 사이징 | 모든 컴포넌트가 사이징에 포함됐는가(누락된 컴포넌트 없는가), compliance의 DR·이중화 의무 판정이 infra 설계에 반영됐는가 |
 | 3 | session 완료 직후 | architect 컴포넌트 경계 ↔ session 시나리오 | 시나리오가 architect에 없는 컴포넌트를 가정하지 않는가, architect의 "미결 항목"과 시나리오가 모순되지 않는가 |
 | 4 | ops 완료 직후 | infra 존 구성 + session 타임아웃 값 ↔ ops 모니터링·정산 전략 | ops 문서가 참조하는 타임아웃·존 이름이 infra·session 문서의 실제 값과 일치하는가 (session↔ops가 SendMessage로 확인했다고 자기보고한 내용이 실제 문서에 반영됐는지 재확인 — 자기보고를 그대로 믿지 않는다). **ops는 infra·session과 병렬이라 비교 상대 문서가 아직 없을 수 있다 — 그 경우 해당 비교 항목만 "보류(비교 상대 미완료)"로 남기고 나머지 항목을 판정한 뒤, 비교 상대가 완료되면 그 항목만 재수행한다** |
