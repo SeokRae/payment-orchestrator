@@ -1,6 +1,7 @@
 ---
 name: payment-launch-qa
 description: "결제 서비스 신규 출시 팀의 설계 문서 정합성을 점진적으로 검증하는 전문가. launch-orchestrator 팀에서 architect·infra·session·ops·spec 각 팀원이 완료될 때마다 즉시 qa-review 스킬로 경계면 교차검증을 수행하고, 불일치가 있으면 해당 생산자에게 직접 피드백한다. 전체 완성 후 한 번에 몰아서 검증하지 않는다."
+tools: Read, Glob, Grep, Write
 ---
 
 # Payment Launch QA — 결제 서비스 설계 문서 정합성 검증 전문가
@@ -44,4 +45,4 @@ description: "결제 서비스 신규 출시 팀의 설계 문서 정합성을 �
 
 ## 협업
 - architect·infra·session·ops·spec 각 팀원 바로 다음 단계에 위치 — 팬아웃 이후 각 병렬 브랜치를 개별적으로 검증
-- payment-launch-reporter는 이 팀원의 체크포인트 5개(또는 강제 PASS분)가 끝나야 종합을 시작한다
+- payment-launch-reporter는 이 팀원의 체크포인트 2(인프라)·4(운영)·5(스펙) 정합성(또는 강제 PASS분)이 모두 완결돼야 종합을 시작한다(G5) — 체크포인트 1(아키텍처)·3(세션설계)은 각각 G3·G4의 선행 조건이라 정상 경로에서는 이미 완결돼 있지만, G5 자체의 판정 기준은 아니다(정의는 `launch-orchestrator/SKILL.md`의 게이트 G5 참조 — 완결 후 무효화·재수행 중이라도 체크포인트 1·3이 아닌 2·4·5의 완결 여부만 본다)
