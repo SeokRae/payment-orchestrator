@@ -4,13 +4,25 @@
 
 **목표:** 신규 결제/PG 서비스 출시를 기획(킥오프·제약분석)부터 규제 준수 심층 검토·논리/물리 아키텍처 설계·트랜잭션 세션설계·운영전략·인터페이스 스펙·점진적 QA·구축보고서까지 10명의 에이전트 팀으로 자동화.
 
-**트리거:** 신규 결제 서비스 출시·PG 서비스 구축·결제 서비스 런칭 준비 관련 요청 시 `payment-launch-orchestrator` 스킬을 사용하라. 규제만 단독 검토할 땐 `payment-compliance-review`, 설계 문서 정합성만 검증할 땐 `payment-qa-review`를 직접 트리거해도 된다. 단순 질문은 직접 응답 가능.
+**트리거:** 신규 결제 서비스 출시·PG 서비스 구축·결제 서비스 런칭 준비 관련 요청 시 `launch-orchestrator` 스킬을 사용하라. 규제만 단독 검토할 땐 `compliance-review`, 설계 문서 정합성만 검증할 땐 `qa-review`를 직접 트리거해도 된다. 단순 질문은 직접 응답 가능.
 
 **변경 이력:**
 
 | 날짜 | 변경 내용 | 대상 | 사유 |
 |---|---|---|---|
 | 2026-08-01 | 초기 추출 — 10 에이전트 + 3 스킬을 원본 프로젝트에서 독립 저장소로 분리 | 전체 | 재사용·버전 관리·다른 프로젝트 이식을 위해 별도 배포 |
+| 2026-08-01 | 4라운드 검수 반영 — Fable 리뷰 22건 → 3라운드 26건 → 4라운드 신규 용어 leak·잔여 불일치, 특정 상호·내부 프로젝트명·이슈번호·브랜드명(Stripe/Visa/Mastercard)·ITSM 절차명 일반화 | 전체 | 독립 배포 전 원본 프로젝트 고유명사·사내 특정 절차 잔재 제거 — 범용 재사용성 확보 |
+| 2026-08-02 | infra-builder를 '설계 후 별도 실행' 모델에서 '즉시 작업' 모델로 재정의, 인프라 구축 범위 설명에서 '요청·승인' 절차 가정 제거 | payment-infra-builder | 실제 인프라 구축 현장은 설계·실행이 분리되지 않고 이 문서가 바로 구축 기준 문서로 쓰이는 경우가 흔함을 반영 |
+| 2026-08-02 | architect에 컴포넌트 간 통신 방향성 정의 역할 추가 | payment-architect | spec-writer가 엔드포인트를 확정할 근거(호출 방향·동기 여부)가 없어 발생하던 재작업 방지 |
+| 2026-08-02 | `20-areas/payment/{service-slug}` 하드코딩 경로 의존성 제거 | 전체 | Obsidian PARA vault 특정 폴더 구조 가정을 없애 vault 밖 프로젝트에서도 이식 가능하게 함 |
+| 2026-08-02 | 오케스트레이터 실행 계층을 게이트 규범(본문, 툴 비종속)+API 매핑(부록 A)으로 분리, 문서 불일치 6건 정리, 플러그인 매니페스트 추가. **검증**: payment-launch-qa 판정 로직 단위 테스트 1건(가짜 불일치 문서 2개, 체크포인트 1 한정) — 전체 파이프라인 드라이런은 미실시, 나머지는 ISSUES.md #1 참조 | 전체 | `TeamCreate`·`TaskCreate(depends_on)` 등 지시서가 가리키던 API가 현행 툴셋에서 폐기돼 실행 불가 상태였음을 발견 — 툴 API가 다시 바뀌어도 순서·게이트 규범은 살아남는 구조로 재작성 |
+| 2026-08-02 | 생산자 7개 에이전트(planner·compliance·architect·infra·session·ops·spec)의 완료 알림 절에 "ADR 필요 여부 검토함" 문구 반영 (PRD-01) | 7개 agent 파일 | reporter·SKILL.md에만 지시가 있고 정작 문구를 써야 할 발신 측(생산자) 파일에는 없어 ADR 대조 로직이 실질적으로 무력화돼 있었음 |
+| 2026-08-02 | SKILL.md 본문에 남아있던 툴 종속 서술(Phase 0·3·4) 3곳을 부록 A 참조로 정리 (PRD-04) | launch-orchestrator/SKILL.md | "본문=게이트, 부록A=API" 분리 원칙이 본문 일부에서 깨져 있던 잔여 불일치 정리 |
+| 2026-08-02 | 나열형 경로에서 `{service-root}/` 접두어가 첫 항목에만 붙던 표기 불일치 5곳 통일 (PRD-05) | 4개 agent 파일 + SKILL.md 산출물 경로 표 | 같은 줄에 여러 경로를 나열할 때 표기가 갈라져 있어 향후 오독 소지 정리 |
+| 2026-08-02 | `agents/`·`skills/`를 저장소 루트로 이동(기존 `.claude/agents/`·`.claude/skills/`), `plugin.json` 재작성(`name`: `payments`로 개명, 비표준 필드 `displayName`·`agents` 제거, `skills`를 배열로 수정, `author.email` 추가) | 전체 구조 + `.claude-plugin/plugin.json` | 실제 배포 중인 플러그인(flowcast)의 매니페스트 검증 스크립트를 대조한 결과 `agents`·`displayName` 필드가 Claude Code 플러그인 스키마에 없고, 커스텀 서브에이전트는 플러그인 루트 `agents/`에서 파일명=frontmatter `name` 규칙으로 자동 인식됨을 확인 — 검증된 구조로 전환. 대신 README의 "디렉터리 복사" 설치법은 이제 `agents/`→`.claude/agents/`, `skills/`→`.claude/skills/`로 이름을 바꿔 복사하는 절차로 바뀜 |
+| 2026-08-02 | `claude plugin validate .` 통과 + `--plugin-dir .`로 실제 로드해 `payments:launch-orchestrator` 등 3개 스킬·`payments:payment-architect` 등 10개 에이전트 전부 정상 노출 확인 (PRD-03 완료). 검증 과정에서 `compliance-review`·`qa-review` 두 스킬의 YAML frontmatter가 실제 파싱 에러 상태였던 것을 발견해 함께 수정(description을 큰따옴표로 감싸지 않아 내부 인용부호·`Keywords:` 콜론 때문에 깨짐 — 수정 전엔 두 스킬 모두 플러그인 로드 시 메타데이터가 통째로 비워지는 상태였음) | `.claude-plugin/plugin.json`, `skills/compliance-review/SKILL.md`, `skills/qa-review/SKILL.md` | Claude Code 자체 내장 검증기와 실제 세션 로드로 끝까지 확인 — 정적 분석만으로는 못 잡는 실제 파싱 버그를 잡아냄 |
+| 2026-08-02 | 3개 스킬 이름에서 `payment-` 접두어 제거 — `payment-launch-orchestrator`→`launch-orchestrator`, `payment-compliance-review`→`compliance-review`, `payment-qa-review`→`qa-review` (에이전트 10개 이름은 그대로 유지) | 3개 skill 디렉터리 + frontmatter + 전 저장소 상호참조 | 플러그인 네임스페이스가 이미 `payments:`라 스킬명에 `payment-`를 또 붙이면 `payments:payment-qa-review`처럼 중복 — flowcast(`flowcast:component`)·sr-harness(`sr-harness:start`) 관례와 맞춤 |
+| 2026-08-02 | ISSUES.md #5~13(사이클/라이프사이클 특화 검토 발견 9건) 반영 — QA 재검증 카운팅을 항목 단위로 정의하고 체크포인트당 왕복 총 5회 상한 추가, 생산자 영구 실패 시 해당 체크포인트를 "미수행(대상 부재)"으로 종결해 G5 교착 해소, QA→ADR 사이클에 결정 확정 책임자(관련 생산자/리더) 절차 추가, "완결 후 전제 문서 변경 시 무효화" 규범 신설, 부분 재실행 절차에 QA 기록 무효화 표기·체크포인트 재수행 판단 단계 추가, ADR supersede 시 원 요청자 통지 절차 추가, compliance on-call 발견사항의 02번 문서 직접 갱신 절차 추가, session/infra↔ops 상호확인에 정본 소유권 명시, reporter 착수조건·QA 표현 문구 통일. **검증**: 9개 이슈 독립 검증(RESOLVED 8, PARTIAL 1) + `launch-orchestrator/SKILL.md`(15곳 넘게 편집됨) 전체 내부 일관성 검증 1건 실시 — PARTIAL 판정(#12, 정본 문구가 session/infra 쪽 파일엔 누락돼 PRD-01과 동일 유형 결함) 및 일관성 검증이 짚어낸 잔여 결함 5건(완결 정의 모호성·Phase 4 표현 미통일·두 무효화 경로의 관계 불명확·참조 절 명칭 불일치·정본 언급 편측 누락)을 모두 재수정해 재확인 완료. 검증 중 발견된 이번 범위 밖의 기존 결함 1건(Phase 0 "새 실행" 분기 문구 자기모순)은 조용히 고치지 않고 ISSUES.md #14로 신규 기록 | `launch-orchestrator/SKILL.md`, `qa-review/SKILL.md`, `payment-launch-qa.md`, `payment-launch-reporter.md`, `payment-decision-recorder.md`, `payment-compliance-analyst.md`, `payment-session-designer.md`, `payment-infra-builder.md`, `payment-ops-designer.md`, `ISSUES.md` | ISSUES.md #1(전체 파이프라인 e2e 검증)은 "가상 서비스 실제 구현"에 가까운 범위라 이번에도 사용자 확인 후 범위 제외, 나머지 종료 보장·교착·상태 불일치류 9건을 문서 규범으로 정리 |
 
 ## 참고
 

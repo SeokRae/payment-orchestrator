@@ -1,5 +1,5 @@
 ---
-name: payment-launch-orchestrator
+name: launch-orchestrator
 description: "신규 결제/PG 서비스 출시(런칭)를 기획부터 구축 보고서까지 자동화하는 에이전트 팀 오케스트레이터. '신규 결제 서비스 출시', 'PG 서비스 구축 하네스', '새 결제 서비스 기획/설계/스펙/운영 문서 만들어줘', '결제 서비스 런칭 준비', '이 서비스 출시 문서 세트 만들어줘' 요청 시 사용. 후속 작업 — '제약분석만 다시', '아키텍처 수정해줘', '세션설계 보완', '스펙 갱신', '보고서 다시 종합', '이전 결과 기반으로 계속', '결제 서비스 출시 하네스 업데이트' 요청 시에도 반드시 이 스킬을 사용한다. 설계 문서 간 정합성을 각 단계 완료 직후 점진적으로 QA 검증한다. {service-root}/docs/ 표준 구조(kickoff·constraints·architecture·session-design·operations·specs·adr·reports)를 실제 도메인 내용으로 채운다."
 ---
 
@@ -9,7 +9,7 @@ description: "신규 결제/PG 서비스 출시(런칭)를 기획부터 구축 �
 
 ## 실행 모드: 에이전트 팀
 
-파이프라인(기획→아키텍처→스펙) + 팬아웃(인프라/세션설계/운영설계 병렬) + 생성-검증(각 생산자 직후 QA 게이트) + 횡단(ADR·규제질의 on-call) 복합 패턴. 단계마다 팀을 새로 만들지 않고, **팀 1개를 처음에 구성**하고 `TaskCreate`의 `depends_on`으로 순서를 강제한 뒤 팀원들이 공유 작업 목록에서 자체적으로 작업을 요청(claim)하며 진행한다.
+파이프라인(기획→아키텍처→스펙) + 팬아웃(인프라/세션설계/운영설계 병렬) + 생성-검증(각 생산자 직후 QA 게이트) + 횡단(ADR·규제질의 on-call) 복합 패턴. 단계마다 팀을 새로 만들지 않고, **팀 1개를 처음에 구성**하고 게이트(아래 Phase 2 참조)로 순서를 강제한 뒤 팀원들이 공유 작업 목록에서 자체적으로 작업을 요청(claim)하며 진행한다.
 
 ## 에이전트 구성
 
@@ -18,15 +18,15 @@ description: "신규 결제/PG 서비스 출시(런칭)를 기획부터 구축 �
 | planner | payment-planner | 킥오프 + 제약분석 | `docs/kickoff/`, `docs/constraints/` |
 | compliance | payment-compliance-analyst | 규제 준수 심층 검토 (1회) + 상시 대기(on-call) | `docs/constraints/` (02번 보강 문서) |
 | architect | payment-architect | 논리 컴포넌트 아키텍처 설계 | `docs/architecture/01-*` |
-| infra | payment-infra-builder | 물리 인프라 설계 (서버 사이징·이중화·존·DR) | `docs/architecture/02-infra-sizing.md` |
+| infra | payment-infra-builder | 물리 인프라 설계 (서버 사이징·이중화·존·DR) | `docs/architecture/02-{service-slug}-인프라-사이징.md` |
 | session | payment-session-designer | 트랜잭션 세션 시나리오 설계 | `docs/session-design/` |
 | ops | payment-ops-designer | 정산·모니터링·테스트 전략 | `docs/operations/` |
 | spec | payment-spec-writer | 인터페이스·API 스펙 | `docs/specs/` |
-| qa | payment-launch-qa | 설계 문서 정합성 점진적 검증 (생성-검증 게이트) | `_launch-workspace/qa/` (docs/에는 쓰지 않음) |
+| qa | payment-launch-qa | 설계 문서 정합성 점진적 검증 (생성-검증 게이트) | `{service-root}/_launch-workspace/qa/` (docs/에는 쓰지 않음) |
 | adr | payment-decision-recorder | 의사결정 기록 (상시 대기) | `docs/adr/` |
 | reporter | payment-launch-reporter | 구축 보고서 종합 | `docs/reports/` |
 
-의존 관계: `planner` → `compliance` → `architect` → **QA(아키텍처)** → (`infra` ∥ `session` ∥ `ops`) → **QA(각 산출물)** → `spec`(session의 QA 통과 후) → **QA(스펙)** → `reporter`. `architect`는 논리 설계만 담당하고 물리 인프라(서버 대수·이중화·존·DR)는 `infra`로 분리되어 있다 — 실제 서비스 구축 현장에서도 인프라 구축과 어플리케이션(서비스) 구축을 별도 트랙으로 다루는 경우가 흔한 것을 반영한 구조다. `qa`는 매 생산자 직후 `payment-qa-review` 스킬로 경계면 교차검증을 수행하는 생성-검증 게이트이며, "문서 QA"만 담당한다(실제 코드 QA는 범위 밖 — `payment-qa-review` 스킬 참조). `compliance`는 planner 완료 직후 1회 심층 검토를 수행한 뒤, `adr`과 마찬가지로 고정 순서 없이 전 팀원의 SendMessage 규제 질의에 상시 응답한다. `adr`은 고정 순서 없이 전 팀원의 SendMessage 요청에 응답.
+의존 관계: `planner` → `compliance` → `architect` → **QA(아키텍처)** → (`infra` ∥ `session` ∥ `ops`) → **QA(각 산출물)** → `spec`(session의 QA 통과 후) → **QA(스펙)** → `reporter`. `architect`는 논리 설계만 담당하고 물리 인프라(서버 대수·이중화·존·DR)는 `infra`로 분리되어 있다 — 실제 서비스 구축 현장에서도 인프라 구축과 어플리케이션(서비스) 구축을 별도 트랙으로 다루는 경우가 흔한 것을 반영한 구조다. `qa`는 매 생산자 직후 `qa-review` 스킬로 경계면 교차검증을 수행하는 생성-검증 게이트이며, "문서 QA"만 담당한다(실제 코드 QA는 범위 밖 — `qa-review` 스킬 참조). `compliance`는 planner 완료 직후 1회 심층 검토를 수행한 뒤, `adr`과 마찬가지로 고정 순서 없이 전 팀원의 SendMessage 규제 질의에 상시 응답한다. `adr`은 고정 순서 없이 전 팀원의 SendMessage 요청에 응답.
 
 ## 워크플로우
 
@@ -40,15 +40,16 @@ description: "신규 결제/PG 서비스 출시(런칭)를 기획부터 구축 �
 2. `{service-root}/docs/` 존재 여부 확인:
    - **미존재** → 초기 실행. Phase 1로 진행
    - **존재 + 사용자가 특정 문서·팀원만 재작업 요청** ("제약분석만 다시", "아키텍처 수정해줘" 등) → **부분 재실행**. 해당 팀원 1명만 서브 에이전트로 재호출(팀 구성 불필요 — 아래 "부분 재실행 절차" 참조)
-   - **존재 + 서비스 방향이 근본적으로 바뀜(새 입력)** → **새 실행**. 기존 `docs/`를 건드리지 않고 `_launch-workspace/`만 `_launch-workspace_{YYYYMMDD}/`로 이동 후 Phase 1부터 재실행 (기존 docs는 사용자 확인 후 덮어쓸지 결정)
+   - **존재 + 서비스 방향이 근본적으로 바뀜(새 입력)** → **새 실행**. 기존 `docs/`를 건드리지 않고 `{service-root}/_launch-workspace/`만 `{service-root}/_launch-workspace_{YYYYMMDD}/`로 이동 후 Phase 1부터 재실행 (기존 docs는 사용자 확인 후 덮어쓸지 결정)
 3. 부분 재실행 시: 재작업 대상 팀원에게 기존 산출물 경로 + 사용자 피드백을 프롬프트에 포함해 Agent 도구로 단독 호출
 
-**부분 재실행 절차 (팀 불필요):**
-```
-Agent(subagent_type: "{에이전트 구성 표의 에이전트 타입, 예: payment-architect}", model: "opus", prompt:
-  "기존 산출물 {경로}를 Read하고, 다음 피드백을 반영해 수정하라: {사용자 피드백}")
-```
-하류 팀원에게 영향이 있으면(예: 아키텍처 변경 시 세션설계·운영설계도 영향) 사용자에게 연쇄 재실행 필요 여부를 확인한다.
+**부분 재실행 절차 (팀 불필요):** 재작업 대상 팀원 1명만 골라 재소집한다(스폰 방법은 부록 A "1) 팀원 스폰" 참조). 프롬프트에 기존 산출물 경로와 사용자 피드백을 포함해, 산출물을 Read하고 피드백을 반영해 수정하도록 지시한다. **재소집 프롬프트에 "이번은 부분 재실행이라 qa·reporter 팀원이 스폰돼 있지 않으니, 정의 파일의 'qa 재검증을 받는다'·'reporter에게 알린다' 류 팀 통신 지시는 따르지 말고 완료 즉시 리더에게만 SendMessage로 알려라"를 명시한다** — 그 지시를 그대로 두면 존재하지 않는 상대를 기다리게 된다.
+
+재작업 완료 후 리더가 직접 수행:
+1. 이 산출물이 QA 체크포인트의 비교 대상이면(예: architect 재작업 → 체크포인트 1), 기존 판정 기록(`{service-root}/_launch-workspace/qa/{NN}-{체크포인트}.md`)이 있는지 확인하고, 있으면 그 파일 상단에 "⚠️ 재작업으로 무효화됨 ({YYYY-MM-DD}, 사유: {재작업 요청 요약})"을 표기해 stale PASS로 오인되지 않게 한다
+2. 해당 체크포인트를 재수행할지 판단한다(변경 폭이 비교 대상 문서와 무관하면 생략 가능) — 재수행이 필요하면 qa 팀원을 다시 스폰하지 않고 리더가 직접 `qa-review` 스킬을 Skill 도구로 호출한다(qa-review는 "팀 밖 단독 트리거"를 원래 지원하므로 이 경로가 자연스럽다) — 결과를 같은 기록 파일에 이어서 남긴다
+3. 하류 팀원에게 영향이 있으면(예: 아키텍처 변경 시 세션설계·운영설계도 영향) 사용자에게 연쇄 재실행 필요 여부를 확인한다
+4. 되돌리기 어려운 결정이 바뀌었으면(ADR 대상) adr에게 SendMessage로 기록/supersede를 요청하고, 리스크 레지스터에 영향이 있으면 기존 `docs/reports/`를 리더가 직접 Read해 수동 보완 여부를 판단한다(reporter를 다시 스폰할지는 영향 범위에 따라 사용자에게 확인)
 
 ### Phase 1: 준비
 
@@ -59,76 +60,52 @@ Agent(subagent_type: "{에이전트 구성 표의 에이전트 타입, 예: paym
 
 ### Phase 2: 팀 구성
 
-```
-TeamCreate(
-  team_name: "payment-launch-team",
-  members: [
-    { name: "planner",    agent_type: "payment-planner",             model: "opus", prompt: "{서비스 개요 + Phase 1 입력}" },
-    { name: "compliance", agent_type: "payment-compliance-analyst",  model: "opus", prompt: "planner 완료 후 5개 규제 도메인(전자금융거래법·PCI-DSS·개인정보보호법·특금법·해외PSP연동) 심층 검토를 1회 수행하고, 이후 팀 전체의 규제 질의에 상시 대기한다" },
-    { name: "architect",  agent_type: "payment-architect",           model: "opus", prompt: "..." },
-    { name: "infra",      agent_type: "payment-infra-builder",       model: "opus", prompt: "architect 완료 후 아키텍처의 네트워크 인프라 레벨(서버 사이징·이중화·존·DR)을 문서화한다. 이 문서가 바로 인프라 구축의 기준 문서가 된다" },
-    { name: "session",    agent_type: "payment-session-designer",    model: "opus", prompt: "..." },
-    { name: "ops",        agent_type: "payment-ops-designer",        model: "opus", prompt: "..." },
-    { name: "spec",       agent_type: "payment-spec-writer",         model: "opus", prompt: "..." },
-    { name: "qa",         agent_type: "payment-launch-qa",           model: "opus", prompt: "architect·infra·session·ops·spec 각 팀원이 완료될 때마다 payment-qa-review 스킬로 경계면 교차검증을 수행하고, 불일치는 해당 생산자에게 직접 SendMessage로 피드백한다(재검증 최대 2회)" },
-    { name: "adr",        agent_type: "payment-decision-recorder",   model: "opus", prompt: "요청 기반 상시 대기, 스스로 작업을 claim하지 않는다" },
-    { name: "reporter",   agent_type: "payment-launch-reporter",     model: "opus", prompt: "..." }
-  ]
-)
+팀원 10명을 스폰하고(구체적 호출 방식은 툴 API에 좌우되므로 [부록 A](#부록-a--현행-claude-code-api-매핑-2026-08-기준) 참조), 아래 **게이트 5개**로 착수 순서를 강제한다. 게이트는 "어떤 산출물이 어떤 상태여야 다음 팀원이 시작해도 되는가"를 관측 가능한 조건으로 정의한 것이며, 이 조건 자체는 이를 강제하는 구체 툴(작업 목록·의존성 API 등)이 바뀌어도 변하지 않는다.
 
-TaskCreate(tasks: [
-  { title: "킥오프+제약분석",              assignee: "planner" },
-  { title: "규제 준수 심층 검토",           assignee: "compliance", depends_on: ["킥오프+제약분석"] },
-  { title: "컴포넌트 아키텍처 설계",         assignee: "architect",  depends_on: ["규제 준수 심층 검토"] },
-  { title: "QA: 아키텍처 정합성 검증",       assignee: "qa",         depends_on: ["컴포넌트 아키텍처 설계"] },
-  { title: "인프라 설계",                  assignee: "infra",      depends_on: ["QA: 아키텍처 정합성 검증"] },
-  { title: "세션 시나리오 설계",            assignee: "session",    depends_on: ["QA: 아키텍처 정합성 검증"] },
-  { title: "운영·정산·테스트 전략",         assignee: "ops",        depends_on: ["QA: 아키텍처 정합성 검증"] },
-  { title: "QA: 인프라 정합성 검증",        assignee: "qa",         depends_on: ["인프라 설계"] },
-  { title: "QA: 세션설계 정합성 검증",      assignee: "qa",         depends_on: ["세션 시나리오 설계"] },
-  { title: "QA: 운영전략 정합성 검증",      assignee: "qa",         depends_on: ["운영·정산·테스트 전략"] },
-  { title: "인터페이스·API 스펙",           assignee: "spec",       depends_on: ["QA: 세션설계 정합성 검증"] },
-  { title: "QA: 스펙 정합성 검증",          assignee: "qa",         depends_on: ["인터페이스·API 스펙"] },
-  { title: "구축 보고서 종합",             assignee: "reporter",   depends_on: ["QA: 인프라 정합성 검증", "QA: 운영전략 정합성 검증", "QA: 스펙 정합성 검증"] }
-])
-```
+| 게이트 | 착수 대상 | 착수 조건 |
+|--------|----------|----------|
+| G1 | compliance | `docs/kickoff/01-*.md` + `docs/constraints/01-{service-slug}-제약-분석.md` 두 파일이 모두 존재 |
+| **G2** | **architect** | **`docs/constraints/02-{service-slug}-규제-준수-체크리스트.md`가 존재하고 `## 법무 확인 필요 목록` 섹션을 포함** — 규제 심층 검토 없이 설계가 시작되는 경로를 막는 이 팀의 핵심 안전장치 |
+| G3 | infra ∥ session ∥ ops (팬아웃 3갈래) | QA 체크포인트 1(아키텍처 정합성)이 PASS 또는 강제 PASS로 완결(아래 "완결"의 정의 참조) |
+| G4 | spec | QA 체크포인트 3(세션설계 정합성)이 완결 |
+| G5 | reporter | QA 체크포인트 2(인프라)·4(운영)·5(스펙) 정합성이 모두 완결 |
 
-> `adr`은 고정 작업을 받지 않는다 — 팀원 누구든 되돌리기 어려운 결정이 나오면 `SendMessage(to: "adr", ...)`로 즉시 기록을 요청하는 방식으로 동작한다.
->
-> `compliance`는 `규제 준수 심층 검토` 작업을 1회 수행한 뒤에는 `adr`처럼 고정 작업을 받지 않는다 — 이후 팀원 누구든 규제 관련 질의가 생기면 `SendMessage(to: "compliance", ...)`로 즉시 응답을 요청하는 방식으로 동작한다. `architect`의 `depends_on`이 `킥오프+제약분석`이 아니라 `규제 준수 심층 검토`인 것에 주의 — architect가 규제 심층 검토 없이 시작하는 경로를 원천 차단하는 핵심 장치다.
->
-> `qa`는 5개 작업을 갖지만 전부 "생산자 직후" 트리거되는 게이트다 — `infra`·`session`·`ops` 3갈래가 `architect`가 아니라 `QA: 아키텍처 정합성 검증`에 의존하는 것에 주의(아키텍처 정합성이 확인되지 않은 채 3명이 각자 다른 전제로 병렬 작업을 시작하는 사고를 막는 장치). 마찬가지로 `spec`은 `QA: 세션설계 정합성 검증`에, `reporter`는 3개 QA 완료 작업에 의존한다. `qa`가 FIX 판정을 내려 생산자에게 되돌려보내는 것은 `TaskCreate` 그래프에 나타나지 않는 팀원 간 SendMessage 루프이며(최대 2회), 이 루프가 끝나야 해당 QA 작업이 `completed`로 표시된다.
+- `adr`과 `compliance`(2단계 이후)는 게이트가 없다 — 고정 작업을 받지 않고 팀원의 `SendMessage` 요청에만 응답하는 on-call 팀원이다.
+- `qa`는 5개 체크포인트 모두 "생산자 직후" 트리거되는 게이트 실행자다 — G3이 `architect` 완료가 아니라 `QA: 아키텍처 정합성 검증`의 완결에 걸리는 것에 주의(아키텍처 정합성이 확인되지 않은 채 infra·session·ops 3명이 각자 다른 전제로 병렬 작업을 시작하는 사고를 막는 장치).
+- **"완결"의 정의** — 최종 판정이 **PASS 또는 강제 PASS**로 끝나고(즉 FIX/GAP 판정 자체는 완결이 아니라 아래 재검증 루프의 중간 상태일 뿐이다), `qa-review` 스킬이 남기는 `보류(비교 상대 미완료)` 항목이 하나도 남지 않은 상태. FIX 판정에 따른 생산자 재작업→재검증 루프(항목당 최초 검증 1회 + 재검증 최대 2회 = 총 3회 확인, 체크포인트당 재검증 왕복 총 5회 상한 — 카운팅 기준은 `qa-review` 스킬 참조)는 게이트 그래프에 나타나지 않는 별도의 SendMessage 왕복이며, 이 루프가 끝나야(PASS 또는 강제 PASS에 도달해야) 완결로 친다. 단, 대상 생산자가 영구 실패로 확정된 체크포인트는 "미수행(대상 부재)"으로 종결하고 완결로 간주한다(아래 에러 핸들링 표 참조).
+- **완결 후 전제 문서 변경 시 무효화(팀 실행 중)** — QA가 이미 PASS(강제 PASS 포함)로 완결 처리한 체크포인트라도 한 번 PASS를 영구 PASS로 취급하지 않는다. 팀이 실행 중인 상태에서 그 판정의 전제였던 문서가 사후에 정당하게 변경되면(예: spec의 역질의로 session 문서가 수정되는 경우 — `payment-session-designer.md` 참조, infra 문서가 계속 갱신되는 living document로 설계된 경우 — `payment-infra-builder.md` 참조), 변경을 가한 팀원이 qa에게 SendMessage로 변경 사실을 알리고, qa는 해당 체크포인트를 무효화한 뒤 1회 한정으로 재수행한다(같은 문서가 다시 바뀌면 그때 다시 1회 — 무한 재수행은 아니되 변경 때마다 재수행은 보장). **팀이 이미 해체된 뒤(Phase 5 이후) 문서가 갱신되는 경우는 이 경로를 쓸 수 없다 — 대신 Phase 0의 "부분 재실행 절차"(리더가 직접 `qa-review`를 단독 트리거)를 따른다.**
+- **게이트 위반 감지 시** — 하류 팀원이 게이트 미충족 상태로(예: architect가 G2 충족 전에) 이미 작업을 시작한 것이 확인되면, 그 산출물을 폐기하지 않는다. "게이트 미충족 상태로 작성됨" 표기를 남기고, 게이트가 충족되는 즉시 그 팀원에게 재작업을 지시한다.
 
 ### Phase 3: 실행 (팀원 자체 조율)
 
-**실행 방식:** 팀원들이 공유 작업 목록에서 `depends_on`이 해소된 작업을 스스로 claim해 진행. 리더는 모니터링하며 병목이 생기면 개입.
+**실행 방식:** 팀원들이 공유 작업 목록에서 게이트가 해소된 작업을 스스로 claim해 진행. 리더는 모니터링하며 병목이 생기면 개입.
 
 **팀원 간 통신 규칙 (에이전트 정의 파일에 상술됨):**
 - planner → compliance: H급 제약·확정 스코프 전달 (규제 심층 검토의 입력)
 - compliance → architect: 규제 심층 검토 완료 시 H급 규제 항목 전달 (H급 규제 없이 설계 시작하지 않도록)
 - architect → infra, session, ops: 컴포넌트 구조 동시 전달 (팬아웃, 3갈래)
 - session ↔ spec: 시나리오별 확정 필드 전달, spec이 세션 설계에 없는 API가 필요하면 session에게 역으로 확인 질의
-- session ↔ ops: 타임아웃/임계값 정합성 상호 확인
-- infra ↔ ops: 서버 존 구성과 운영 전환 로드맵(배포·모니터링 대상)이 어긋나지 않도록 상호 확인
-- qa → architect·infra·session·ops·spec: FIX/GAP 판정 시 구체적 위치·불일치 내용 전달, 수정 완료 알림 수신 즉시 재검증 (최대 2회)
-- qa → adr: 불일치가 실은 미결정 때문이면(예: 이중화 여부 미정으로 infra·ops가 서로 다른 전제) 먼저 ADR 기록 요청 후 그 결정 기준으로 재검증
+- session ↔ ops: 타임아웃/임계값 정합성 상호 확인 — **정본(source of truth)은 session 문서**. 값이 다르면 ops가 session 문서 값에 맞춘다. 왕복에 고정 상한은 없지만 3회 왕복 후에도 못 맞추면 어느 한쪽만 계속 고치는 상태를 정상 흐름으로 넘기지 않고 리더에게 SendMessage로 에스컬레이션한다
+- infra ↔ ops: 서버 존 구성과 운영 전환 로드맵(배포·모니터링 대상)이 어긋나지 않도록 상호 확인 — **정본은 infra 문서**. 값이 다르면 ops가 infra 문서 값에 맞춘다. 왕복 상한·에스컬레이션 규칙은 session ↔ ops와 동일
+- qa → architect·infra·session·ops·spec: FIX/GAP 판정 시 구체적 위치·불일치 내용 전달, 수정 완료 알림 수신 즉시 재검증 (항목당 최초 검증 1회 + 재검증 최대 2회 = 총 3회 확인, 카운팅 기준은 `qa-review` 스킬 참조)
+- qa → 결정 확정 책임자(관련 생산자, 애매하면 리더) → adr: 불일치가 실은 미결정 때문이면(예: 이중화 여부 미정으로 infra·ops가 서로 다른 전제) qa는 **먼저 결정 확정 책임자를 지목해 SendMessage로 확정을 요청**한다 — adr은 결정을 내리는 역할이 아니라 이미 확정된 내용만 기록하므로(`payment-decision-recorder`의 "입력/출력 프로토콜" 참조), 확정 없이 곧장 adr에게 ADR 기록을 요청하면 "qa는 adr의 결정을 기다리고 adr은 확정 내용을 기다리는" 대기 사슬이 생긴다. 확정된 내용을 받은 뒤에야 adr에게 ADR 기록을 요청하고, 그 결정을 기준으로 재검증
 - qa → 리더: REDO급(전면 재설계 필요) 불일치 발견 시 판정 없이 즉시 에스컬레이션
 - 전 팀원 → adr: 되돌리기 어려운 결정 발생 시 기록 요청
 - 전 팀원 → compliance: 규제 관련 질의 발생 시 SendMessage로 문의 (adr과 동일한 on-call 패턴)
-- 산출물이 있는 7명(planner·compliance·architect·infra·session·ops·spec) → reporter: 각자 완료 알림 (adr은 on-call이라 완료 알림 없음 — 요청 시 회신)
+- 산출물이 있는 7명(planner·compliance·architect·infra·session·ops·spec) → reporter: 각자 완료 알림 시 "ADR 필요 여부 검토함(불필요 / adr에게 요청함 — adr-{번호})" 한 줄을 반드시 포함한다 — on-call 팀원(adr)은 고정 태스크가 없어 TaskList로 참여 여부가 보이지 않으므로, 생산자 쪽에서 검토했다는 사실 자체를 남겨야 리더가 "결정을 놓친 것"과 "애초에 결정이 없었던 것"을 구분할 수 있다 (adr은 on-call이라 완료 알림 없음 — 요청 시 회신)
 - qa → reporter: 각 체크포인트 판정 결과(강제 PASS 포함) 요약 전달 — 리스크 레지스터의 "QA 확인 필요" 항목 근거
 - reporter → adr: ADR 전체 목록을 SendMessage로 요청 (Phase 4 시작 시점) — adr → reporter: 목록 전달
 - reporter → compliance: "법무 확인 필요 목록"(H급 규제 항목 포함)을 SendMessage로 요청
 
 **리더 모니터링:**
 - 팀원이 유휴 상태가 되면 자동 알림 수신 → 다음 작업이 의존성 대기 중인지, 막힌 것인지 확인
-- `TaskGet`으로 전체 진행률 확인, 특정 팀원이 30분 이상 진행 없이 막히면 `SendMessage`로 상태 확인
+- 각 팀원의 진행 상태를 확인한다(방법은 부록 A "3) 진행률 확인·종료" 참조). 특정 팀원이 30분 이상 진행 없이 막히면 `SendMessage`로 상태 확인
 
-**산출물 저장 (최종 경로 — `_launch-workspace/`가 아닌 실제 문서 저장 위치):**
+**산출물 저장 (최종 경로 — `{service-root}/_launch-workspace/`가 아닌 실제 문서 저장 위치):**
 
 | 팀원 | 출력 경로 |
 |------|----------|
-| planner | `{service-root}/docs/kickoff/`, `docs/constraints/` |
+| planner | `{service-root}/docs/kickoff/`, `{service-root}/docs/constraints/` |
 | compliance | `{service-root}/docs/constraints/` (02번 보강 문서 — planner와 동일 폴더, 별도 파일) |
 | architect | `{service-root}/docs/architecture/` (01번 컴포넌트 문서) |
 | infra | `{service-root}/docs/architecture/` (02번 인프라 사이징 문서 — architect와 동일 폴더, 별도 파일) |
@@ -143,22 +120,23 @@ TaskCreate(tasks: [
 
 ### Phase 4: 통합 확인
 
-1. `reporter` 작업(`구축 보고서 종합`) 완료 대기 (`TaskGet`)
+1. `reporter` 작업(`구축 보고서 종합`) 완료 대기
 2. 리더가 `docs/reports/{service-slug}-플랫폼-구축-보고서.md`를 Read하여 리스크 레지스터에 각 팀원의 미결 항목이 실제로 반영됐는지 교차 확인
-3. `_launch-workspace/qa/`의 5개 체크포인트 기록을 Read하여 강제 PASS(2회 초과 미해소) 항목이 리스크 레지스터에 빠짐없이 반영됐는지 확인
-4. 누락 발견 시 reporter에게 SendMessage로 보완 요청 (1회)
+3. `{service-root}/_launch-workspace/qa/`의 5개 체크포인트 기록을 Read하여 강제 PASS(항목당 총 3회 확인 후에도 미해소, 또는 체크포인트 왕복 총 5회 도달로 인한 일괄 처리) 항목이 리스크 레지스터에 빠짐없이 반영됐는지 확인
+4. 7명의 완료 알림에 포함된 "ADR 필요 여부 검토함" 기록을 훑어 "불필요" 판단들이 실제로 타당한지(예: 이중화 여부·동기/비동기 처리 방식처럼 되돌리기 어려운 결정을 "불필요"로 넘긴 경우는 없는지) 훑어보고, 의심스러우면 해당 팀원에게 SendMessage로 재확인
+5. 누락 발견 시 reporter에게 SendMessage로 보완 요청 (1회)
 
 ### Phase 5: 정리
 
 1. 팀원 전원에게 종료 알림 (SendMessage)
-2. `TeamDelete`
-3. `_launch-workspace/` 보존 (사후 감사용, 삭제하지 않음)
+2. 팀 종료 — 남은 작업이 있으면 전부 완료 처리하고(부록 A 참조), 팀 자체를 닫는 전용 수단이 없으면 종료 통지로 갈음한다
+3. `{service-root}/_launch-workspace/` 보존 (사후 감사용, 삭제하지 않음)
 4. 사용자에게 결과 요약: 생성된 문서 목록, 미결 항목 개수, ADR 개수
 
 ## 데이터 흐름
 
 ```
-[리더] → TeamCreate(10명) + TaskCreate(depends_on 체인)
+[리더] → 팀원 10명 스폰 + 게이트 G1~G5 설정
                 │
         planner ──SendMessage→ compliance ──SendMessage→ architect
                   │                  ↑
@@ -173,7 +151,7 @@ TaskCreate(tasks: [
                   │
         (전 팀원) ──SendMessage(결정 발생시)→ adr
         (전 팀원) ──SendMessage(규제 질의시)→ compliance
-        (QA가 FIX 판정) ──SendMessage(구체적 불일치)→ 해당 생산자 (재검증 루프, 최대 2회)
+        (QA가 FIX 판정) ──SendMessage(구체적 불일치)→ 해당 생산자 (재검증 루프, 항목당 총 3회 확인)
                   │
         [QA: 인프라] + [QA: 운영] + [QA: 스펙] 완료 ──SendMessage→ reporter
                                         │
@@ -186,14 +164,15 @@ TaskCreate(tasks: [
 
 | 상황 | 전략 |
 |------|------|
-| 팀원 1명 실패/중지 | 리더가 감지 → SendMessage로 상태 확인 → 재시작. 재실패 시 해당 산출물 없이 하류 작업 진행, reporter에게 누락 명시 지시 |
-| architect가 H급 제약·H급 규제 항목 없이 시작(planner·compliance 지연) | 리더가 개입해 architect를 대기시키고 planner·compliance 상태 확인 (TaskCreate의 `depends_on: ["규제 준수 심층 검토"]`가 정상 작동하면 원천적으로 발생하지 않아야 함 — 발생 시 의존관계 설정 오류 의심) |
+| 팀원 1명 실패/중지 | 리더가 감지 → SendMessage로 상태 확인 → 재시작. 재실패 시(영구 실패 확정) 해당 산출물 없이 하류 작업 진행, reporter에게 누락 명시 지시. 그 생산자를 비교 대상으로 삼는 QA 체크포인트는 "미수행(대상 부재)"으로 종결 처리하고 완결로 간주해 G5를 비롯한 하류 게이트 산정에서 제외한다 — 비교 상대가 영구히 나타나지 않아 "보류(비교 상대 미완료)" 항목이 영구히 안 풀리는 상태를 막는다 |
+| architect가 H급 제약·H급 규제 항목 없이 시작(planner·compliance 지연) | 리더가 개입해 architect를 대기시키고 planner·compliance 상태 확인 (게이트 G2가 정상 작동하면 원천적으로 발생하지 않아야 함 — 발생 시 게이트 설정 오류 의심) |
 | infra/session/ops 중 일부만 지연 | 나머지는 계속 진행, spec은 session의 QA 통과만으로 시작 가능(infra·ops의 QA는 spec의 하드 의존성 아님). 단 reporter는 infra·ops·spec 3개 QA 모두 완료돼야 시작 |
-| qa가 같은 불일치를 2회 재검증 후에도 발견 | 강제 PASS 처리 + 생산자에게 SendMessage로 해당 문서에 "미결 항목(QA 확인 필요)" 섹션 추가를 요청(qa 자신은 docs/에 쓰지 않는다) + reporter에게 SendMessage 통지. 3회차 재시도를 리더가 임의로 지시하지 않는다(무한 루프 방지가 우선) |
+| qa가 같은 항목(필드/컴포넌트)의 불일치를 재검증 최대 2회(=총 3회 확인) 후에도 발견, 또는 체크포인트 전체 재검증 왕복이 총 5회에 도달 | 강제 PASS 처리(전자는 해당 항목만, 후자는 그 시점까지 남은 불일치 전부 일괄) + 생산자에게 SendMessage로 해당 문서에 "미결 항목(QA 확인 필요)" 섹션 추가를 요청(qa 자신은 docs/에 쓰지 않는다) + reporter에게 SendMessage 통지. 리더가 임의로 추가 재시도를 지시하지 않는다(무한 루프 방지가 우선) |
 | qa가 REDO급(전면 재설계 필요) 불일치를 발견 | qa는 판정하지 않고 즉시 리더에게 에스컬레이션 → 리더가 영향 범위(팬아웃 3갈래 전체 재작업 여부 등) 판단 후 해당 팀원(들)에게 직접 지시 |
 | adr에 결정 기록 폭주(팀원 다수가 동시 요청) | adr이 순차 처리, 리더는 개입하지 않음 (병목이 아니라 정상 동작) |
 | 외부 연동 스펙 전반 미확보 | 전체를 막지 않고 "미확보" 표기로 진행 — 스펙 확보는 이 하네스 범위 밖(사용자가 별도로 확보) |
 | 팀원 과반 실패 | 사용자에게 알리고 진행 여부 확인 |
+| 팀원이 자신의 게이트가 영구히 충족 불가능하다고 판단(예: 선행 작업·태스크가 사라졌거나 응답이 없음) | **스스로 우회해 착수하지 않는다** — 즉시 리더에게 SendMessage로 에스컬레이션하고, 리더가 상태를 확인해 재개를 지시할 때까지 대기를 유지한다. "대기가 곧 교착"이라는 판단으로 게이트를 임의로 건너뛰는 것은 금지 — 리더가 확인하기 전까지 게이트 미충족과 게이트 소실을 팀원 스스로 구분할 수 없기 때문이다 |
 
 ## 테스트 시나리오
 
@@ -216,15 +195,99 @@ TaskCreate(tasks: [
 
 ### 에러 흐름 2 — QA 재검증 루프 소진
 1. Phase 3에서 qa가 "QA: 운영전략 정합성 검증"에서 ops 문서의 타임아웃 값이 session 문서와 다름을 발견 → FIX 판정, ops에게 SendMessage
-2. ops가 수정 후 완료 알림 → qa 재검증 → 여전히 다른 값(이번엔 반대 방향으로 어긋남) → FIX 2번째 판정
-3. ops가 다시 수정 → qa 재검증(3번째 확인) → 아직도 불일치
-4. qa는 3번째부터 재시도하지 않고 강제 PASS 처리 + ops에게 SendMessage로 "미결 항목(QA 확인 필요) — 타임아웃 값이 session과 상충, 수동 확인 필요" 섹션을 문서에 추가하도록 요청(qa 자신은 docs/에 쓰지 않는다) + reporter에게 SendMessage 통지
+2. ops가 수정 후 완료 알림 → qa 재검증 → 여전히 다른 값(이번엔 반대 방향으로 어긋남, 그러나 "타임아웃 값"이라는 같은 항목이므로 동일 불일치로 카운트) → FIX 2번째 판정
+3. ops가 다시 수정 → qa 재검증(같은 항목 기준 총 3회 확인) → 아직도 불일치
+4. qa는 같은 항목을 더 재시도하지 않고 강제 PASS 처리 + ops에게 SendMessage로 "미결 항목(QA 확인 필요) — 타임아웃 값이 session과 상충, 수동 확인 필요" 섹션을 문서에 추가하도록 요청(qa 자신은 docs/에 쓰지 않는다) + reporter에게 SendMessage 통지
 5. reporter가 이 항목을 리스크 레지스터 최상단(H급 취급)에 반영
 
 ## 결제 도메인 참고 자료 (팀원이 필요 시 Read)
 
 - 문서 구조·포맷 참고용(내용 복사 금지): 대상 프로젝트에 이미 만들어둔 유사 결제 서비스 문서가 있다면 구조만 참고
 - 도메인 지식: 대상 프로젝트에 벤더별(카드사·VAN·PSP) 연동 문서가 있다면 활용 (있는 범위 내)
-- 규제 판단 근거: `.claude/skills/payment-compliance-review/references/regulatory-checklist.md` (compliance 팀원이 Skill 도구로 호출, 다른 팀원이 규제 맥락을 직접 확인할 때도 Read 가능)
-- QA 검증 매트릭스·판정 기준: `.claude/skills/payment-qa-review/SKILL.md` (qa 팀원이 Skill 도구로 호출 — **"문서 QA"만 다룬다. 실제 구현 코드 테스트("개발 QA")는 이 하네스 범위 밖**이며 별도 코드베이스에서 진행됨을 팀원 전원이 인지)
+- 규제 판단 근거: `skills/compliance-review/references/regulatory-checklist.md` (compliance 팀원이 Skill 도구로 호출, 다른 팀원이 규제 맥락을 직접 확인할 때도 Read 가능)
+- QA 검증 매트릭스·판정 기준: `skills/qa-review/SKILL.md` (qa 팀원이 Skill 도구로 호출 — **"문서 QA"만 다룬다. 실제 구현 코드 테스트("개발 QA")는 이 하네스 범위 밖**이며 별도 코드베이스에서 진행됨을 팀원 전원이 인지)
 - 문서화 표준: 대상 프로젝트에 문서 구조 표준이 있다면 참고
+
+## 부록 A — 현행 Claude Code API 매핑 (2026-08 기준)
+
+> 이 부록은 리서치 시점 API 기준이다. 툴 이름·파라미터가 바뀌면 **이 부록만 갱신**하고, 본문(Phase 2)의 게이트 정의는 건드리지 않는다 — 게이트는 "무엇이 언제 시작해도 되는가"라는 규범이고, 이 부록은 그 규범을 지금 이 순간의 툴로 어떻게 구현하는지 보여주는 예시일 뿐이다.
+
+### 1) 팀원 스폰
+
+팀 전체를 한 번에 구성하는 전용 툴은 없다 — 개별 서브에이전트를 이름을 붙여 스폰한다. `name`은 이후 `SendMessage(to: "...")` 라우팅 키로 그대로 쓰인다.
+
+```
+Agent(name: "planner",    subagent_type: "payment-planner",            model: "opus", prompt: "{서비스 개요 + Phase 1 입력}")
+Agent(name: "compliance", subagent_type: "payment-compliance-analyst", model: "opus", prompt: "planner 완료 후 5개 규제 도메인 심층 검토를 1회 수행하고, 이후 팀 전체의 규제 질의에 상시 대기한다")
+Agent(name: "architect",  subagent_type: "payment-architect",          model: "opus", prompt: "...")
+Agent(name: "infra",      subagent_type: "payment-infra-builder",      model: "opus", prompt: "architect 완료 후 아키텍처의 네트워크 인프라 레벨(서버 사이징·이중화·존·DR)을 문서화한다")
+Agent(name: "session",    subagent_type: "payment-session-designer",   model: "opus", prompt: "...")
+Agent(name: "ops",        subagent_type: "payment-ops-designer",       model: "opus", prompt: "...")
+Agent(name: "spec",       subagent_type: "payment-spec-writer",        model: "opus", prompt: "...")
+Agent(name: "qa",         subagent_type: "payment-launch-qa",          model: "opus", prompt: "architect·infra·session·ops·spec 각 팀원이 완료될 때마다 qa-review 스킬로 경계면 교차검증을 수행한다")
+Agent(name: "adr",        subagent_type: "payment-decision-recorder",  model: "opus", prompt: "요청 기반 상시 대기, 스스로 작업을 claim하지 않는다")
+Agent(name: "reporter",   subagent_type: "payment-launch-reporter",    model: "opus", prompt: "...")
+```
+
+### 2) 작업 등록 — `TaskCreate`는 1건씩, 담당·선후관계는 `TaskUpdate`로 분리
+
+```
+t1  = TaskCreate({ subject: "킥오프+제약분석" })
+      TaskUpdate({ taskId: t1, owner: "planner" })
+
+t2  = TaskCreate({ subject: "규제 준수 심층 검토" })
+      TaskUpdate({ taskId: t2, owner: "compliance", addBlockedBy: [t1] })          # G1 구현
+
+t3  = TaskCreate({ subject: "컴포넌트 아키텍처 설계" })
+      TaskUpdate({ taskId: t3, owner: "architect", addBlockedBy: [t2] })           # G2 구현 — 핵심 안전장치
+
+t4  = TaskCreate({ subject: "QA: 아키텍처 정합성 검증" })
+      TaskUpdate({ taskId: t4, owner: "qa", addBlockedBy: [t3] })
+
+t5  = TaskCreate({ subject: "인프라 설계" })
+      TaskUpdate({ taskId: t5, owner: "infra", addBlockedBy: [t4] })               # G3
+t6  = TaskCreate({ subject: "세션 시나리오 설계" })
+      TaskUpdate({ taskId: t6, owner: "session", addBlockedBy: [t4] })             # G3
+t7  = TaskCreate({ subject: "운영·정산·테스트 전략" })
+      TaskUpdate({ taskId: t7, owner: "ops", addBlockedBy: [t4] })                 # G3
+
+t8  = TaskCreate({ subject: "QA: 인프라 정합성 검증" })
+      TaskUpdate({ taskId: t8, owner: "qa", addBlockedBy: [t5] })
+t9  = TaskCreate({ subject: "QA: 세션설계 정합성 검증" })
+      TaskUpdate({ taskId: t9, owner: "qa", addBlockedBy: [t6] })
+t10 = TaskCreate({ subject: "QA: 운영전략 정합성 검증" })
+      TaskUpdate({ taskId: t10, owner: "qa", addBlockedBy: [t7] })
+
+t11 = TaskCreate({ subject: "인터페이스·API 스펙" })
+      TaskUpdate({ taskId: t11, owner: "spec", addBlockedBy: [t9] })               # G4
+
+t12 = TaskCreate({ subject: "QA: 스펙 정합성 검증" })
+      TaskUpdate({ taskId: t12, owner: "qa", addBlockedBy: [t11] })
+
+t13 = TaskCreate({ subject: "구축 보고서 종합" })
+      TaskUpdate({ taskId: t13, owner: "reporter", addBlockedBy: [t8, t10, t12] })  # G5
+```
+
+| # | subject | owner | addBlockedBy | 구현 게이트 |
+|---|---------|-------|--------------|------------|
+| t1 | 킥오프+제약분석 | planner | — | — |
+| t2 | 규제 준수 심층 검토 | compliance | t1 | G1 |
+| t3 | 컴포넌트 아키텍처 설계 | architect | t2 | **G2** |
+| t4 | QA: 아키텍처 정합성 검증 | qa | t3 | — |
+| t5 | 인프라 설계 | infra | t4 | G3 |
+| t6 | 세션 시나리오 설계 | session | t4 | G3 |
+| t7 | 운영·정산·테스트 전략 | ops | t4 | G3 |
+| t8 | QA: 인프라 정합성 검증 | qa | t5 | — |
+| t9 | QA: 세션설계 정합성 검증 | qa | t6 | — |
+| t10 | QA: 운영전략 정합성 검증 | qa | t7 | — |
+| t11 | 인터페이스·API 스펙 | spec | t9 | G4 |
+| t12 | QA: 스펙 정합성 검증 | qa | t11 | — |
+| t13 | 구축 보고서 종합 | reporter | t8, t10, t12 | G5 |
+
+`adr`과 `compliance`(t2 완료 이후)는 고정 작업을 받지 않는다 — 팀원 누구든 `SendMessage(to: "adr"|"compliance", ...)`로 요청할 때만 반응한다.
+
+### 3) 진행률 확인·종료
+
+- `TaskList`로 팀원이 claim 가능한(의존성이 풀린) 작업 확인, `TaskGet`으로 특정 작업 상세 확인
+- FIX/GAP 재검증 루프처럼 게이트 그래프에 없는 왕복은 `SendMessage`로만 이뤄지며, `TaskUpdate(status: "completed")`는 그 왕복이 끝난 뒤에 호출한다 — 재검증 미완결 상태에서 QA 작업을 먼저 `completed`로 표시하지 않는다
+- 팀 종료 시 전용 삭제 툴이 없으면, 팀원 전원에게 종료 SendMessage를 보내고 남은 작업은 `TaskUpdate(status: "completed")`로 마감하는 것으로 갈음한다
