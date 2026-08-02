@@ -39,7 +39,7 @@
 
 1. 설치 — 둘 중 편한 방법으로:
    - **플러그인으로 설치**: `.claude-plugin/plugin.json`·`marketplace.json`이 모두 포함돼 있어 아래 두 방법 다 됩니다. 플러그인 이름은 `payments`이며, 설치되면 스킬은 `payments:launch-orchestrator` 형태로 노출됩니다.
-     - marketplace 등록: `claude plugin marketplace add <이 저장소 경로 또는 git URL>` 후 `claude plugin install payments@payments` (실사용 검증 완료 — `claude plugin details payments@payments`로 스킬 3개·에이전트 10개 정상 인식 확인됨)
+     - marketplace 등록: `claude plugin marketplace add <이 저장소 경로 또는 git URL>` 후 `claude plugin install payments@sr` (마켓플레이스 이름은 `sr` — 실사용 검증 완료: `claude plugin details payments@sr`로 스킬 3개·에이전트 10개 정상 인식 확인됨)
      - 또는 등록 없이 바로 로드: `claude --plugin-dir <이 저장소 경로>`
    - **디렉터리 복사**: 이 저장소의 `agents/`·`skills/` 안의 파일들을 대상 프로젝트의 `.claude/agents/`·`.claude/skills/`로 복사합니다(marketplace 등록 없이 즉시 사용 가능, 이식 방법은 아래 "내 프로젝트로 이식하기" 참조).
 2. 세션에 입력합니다:
