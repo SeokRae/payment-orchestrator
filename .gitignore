@@ -6,3 +6,6 @@ _launch-workspace/*
 .idea/
 *.iml
 .DS_Store
+
+# Claude Code 로컬 설정 (사용자 로컬 절대경로·개인 플러그인 활성화 상태 포함, 커밋 대상 아님)
+.claude/settings.local.json
