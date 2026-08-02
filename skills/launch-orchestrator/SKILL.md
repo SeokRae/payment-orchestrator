@@ -104,7 +104,8 @@ description: "신규 결제/PG 서비스 출시(런칭)를 기획부터 구축 �
 **팀원 간 통신 규칙 (에이전트 정의 파일에 상술됨):**
 - planner → compliance: H급 제약·확정 스코프 전달 (규제 심층 검토의 입력)
 - compliance → architect: 규제 심층 검토 완료 시 H급 규제 항목 전달 (H급 규제 없이 설계 시작하지 않도록)
-- architect → infra, session, ops: 컴포넌트 구조 동시 전달 (팬아웃, 3갈래)
+- architect ⇄ 리더 ⇄ 사용자: 하류 구조가 갈리는 축이 있으면 확정 전 옵션을 제시하고 선택받는다(UC2, G3보다 먼저 종료). REDO 에스컬레이션과 달리 리더는 판단하지 않고 중계만 한다 — 왕복 종료 + 확정 산출물 작성 후에만 아래 팬아웃이 이뤄진다
+- architect → infra, session, ops: 컴포넌트 구조(확정본) 동시 전달 (팬아웃, 3갈래)
 - session ↔ spec: 시나리오별 확정 필드 전달, spec이 세션 설계에 없는 API가 필요하면 session에게 역으로 확인 질의
 - session ↔ ops: 타임아웃/임계값 정합성 상호 확인 — **정본(source of truth)은 session 문서**. 값이 다르면 ops가 session 문서 값에 맞춘다. 왕복에 고정 상한은 없지만 3회 왕복 후에도 못 맞추면 어느 한쪽만 계속 고치는 상태를 정상 흐름으로 넘기지 않고 리더에게 SendMessage로 에스컬레이션한다
 - infra ↔ ops: 서버 존 구성과 운영 전환 로드맵(배포·모니터링 대상)이 어긋나지 않도록 상호 확인 — **정본은 infra 문서**. 값이 다르면 ops가 infra 문서 값에 맞춘다. 왕복 상한·에스컬레이션 규칙은 session ↔ ops와 동일
@@ -214,7 +215,7 @@ description: "신규 결제/PG 서비스 출시(런칭)를 기획부터 구축 �
 2. Phase 0: `{xyz-pay 서비스의 문서 루트}/docs/` 미존재 → 초기 실행
 3. Phase 1: 사용자 입력 정리 후 `_launch-workspace/00_input/개요.md`에 저장(외부 도구 호출 없음)
 4. Phase 2: 10명 팀 구성, 13개 작업 등록(생산 8 + QA 5)
-5. Phase 3: planner 완료 → compliance 규제 심층 검토 시작 → compliance 완료(H급 규제 항목을 architect에 SendMessage) → architect 완료 → qa가 "QA: 아키텍처 정합성 검증" 수행, PASS → infra/session/ops 3갈래 병렬 시작 → 각각 완료 시마다 qa가 해당 체크포인트 검증 → session의 QA가 FIX 판정(예: "해외카드 시나리오가 architect의 미결 항목과 모순") → qa가 session에게 SendMessage로 구체적 위치 지적 → session 수정 → qa 재검증 PASS → spec 시작 → qa가 스펙 검증 → 중간에 infra가 "이중화 여부"를 adr에게 기록 요청, session이 해외 결제수단 관련 규제 질의를 compliance에게 SendMessage로 문의
+5. Phase 3: planner 완료 → compliance 규제 심층 검토 시작 → compliance 완료(H급 규제 항목을 architect에 SendMessage) → architect가 컴포넌트 경계 축 하나(상태 전이 세분화 vs 도메인 단위 묶기)로 옵션 2개를 리더 경유로 제시(UC2) → 사용자가 ★추천안 선택 → architect가 확정 산출물 작성 완료 → qa가 "QA: 아키텍처 정합성 검증" 수행, PASS → infra/session/ops 3갈래 병렬 시작 → 각각 완료 시마다 qa가 해당 체크포인트 검증 → session의 QA가 FIX 판정(예: "해외카드 시나리오가 architect의 미결 항목과 모순") → qa가 session에게 SendMessage로 구체적 위치 지적 → session 수정 → qa 재검증 PASS → spec 시작 → qa가 스펙 검증 → 중간에 infra가 "이중화 여부"를 adr에게 기록 요청, session이 해외 결제수단 관련 규제 질의를 compliance에게 SendMessage로 문의
 6. Phase 4: infra·ops·spec 3개 QA 완료 확인 후 reporter가 구축 보고서 완성, 리더가 리스크 레지스터 교차 확인(QA 강제 PASS 항목 포함 여부까지)
 7. Phase 5: 팀 정리, 사용자에게 결과 요약
 8. 예상 결과: `{xyz-pay 서비스의 문서 루트}/docs/{kickoff,constraints,architecture,session-design,operations,specs,adr,reports}/` 전체 생성
@@ -232,6 +233,13 @@ description: "신규 결제/PG 서비스 출시(런칭)를 기획부터 구축 �
 3. ops가 재시도 횟수 필드를 고치는 과정에서 실수로 타임아웃 값을 30초로 되돌림 → qa 재검증 → **재시도 횟수 필드는 이제 일치함을 확인**했으나, 사유는 "타임아웃 값 30초 vs 45초 불일치"로 **직전 라운드(2번째)와는 다르지만 그 항목의 라운드 1 기록과 동일** → 라운드를 오가며 반복되는 오실레이션으로 항목 단위 무진행 판정(직전 라운드만 비교했다면 "새로운 지적"으로 오판정해 왕복이 끝없이 이어질 수 있었던 지점). 라운드 3으로 같은 파일에 append(남은 항목 수: 1 — 2라운드 연속 미갱신이라 체크포인트 단위로도 동시에 무진행 성립하지만, 이 항목 자체가 오실레이션으로 이미 무진행이므로 항목 단위 규칙으로 판정)
 4. qa는 더 재시도하지 않고 그 항목을 강제 PASS 처리 + ops에게 SendMessage로 "미결 항목(QA 확인 필요) — 타임아웃 값이 session과 반복적으로 어긋남(오실레이션), 수동 확인 필요" 섹션을 문서에 추가하도록 요청(qa 자신은 docs/에 쓰지 않는다) + reporter에게 SendMessage 통지
 5. reporter가 이 항목을 리스크 레지스터 최상단(H급 취급)에 반영
+
+### 에러 흐름 3 — UC2 옵션 선택 무응답
+1. architect가 컴포넌트 경계 축(상태 전이 세분화 vs 도메인 단위 묶기)으로 옵션 2개(★추천: 상태 전이 세분화)를 리더에게 SendMessage → 리더가 `_launch-workspace/user-checkpoints/UC2-아키텍처-옵션.md`에 기록 후 사용자에게 제시
+2. 사용자가 응답 없이 다른 주제로 대화를 이어감 → 리더가 1회 리마인드
+3. 리마인드 후에도 무응답 → 리더가 ★추천안(상태 전이 세분화) 자동 채택을 architect에게 회신 + "UC2 옵션 미선택 — 추천안 자동 채택" 사실을 상태 파일에 기록
+4. architect가 추천안으로 확정 산출물을 작성하며 `## 미결 항목`에 "아키텍처 옵션 미선택 — 추천안(상태 전이 세분화) 자동 채택됨" 한 줄을 남기고, 완료 처리 후 팬아웃 SendMessage(infra/session/ops) — 이 시점에야 G3 대상 게이트 판정이 시작된다(옵션 제시 시점에는 시작되지 않음)
+5. Phase 5 결과 요약에 "UC2: 추천안 자동 채택" 사실 표기(4번의 산출물 표기와 함께 — 문서를 직접 열어보지 않아도 알 수 있도록 이중으로 남긴다)
 
 ## 결제 도메인 참고 자료 (팀원이 필요 시 Read)
 
