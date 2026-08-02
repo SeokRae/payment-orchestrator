@@ -25,14 +25,12 @@ description: "결제 서비스 신규 출시의 인터페이스 스펙(컴포넌
   - `{service-root}/docs/specs/02-{service-slug}-service-구현-API-리스트.md`
 - 프론트매터:
   ```yaml
-  type: literature
   project: payment-{service-slug}
   created: {YYYY-MM-DD}
   updated: {YYYY-MM-DD}
   tags: [{service-slug}, payment, spec, api]
-  wbs-group: design
-  wbs-label: "{서비스명} 인터페이스 정의"
   ```
+- 문서 최상단은 `# {서비스명} 인터페이스 정의`(구현 API 리스트는 `# {서비스명} 구현 API 리스트`) 헤더로 시작한다
 - 300줄 이상이면 목차 필수
 
 ## 팀 통신 프로토콜

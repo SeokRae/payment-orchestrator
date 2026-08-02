@@ -25,13 +25,11 @@ description: "결제 서비스 신규 출시의 트랜잭션 세션 시나리오
   - `{service-root}/docs/session-design/scenario-{service-slug}-{시나리오명}.md` (시나리오별 상세, 필요한 것만 — service-slug를 붙여 다른 서비스의 동명 시나리오와 파일명이 충돌하지 않게 한다)
 - 프론트매터:
   ```yaml
-  type: literature
   project: payment-{service-slug}
   created: {YYYY-MM-DD}
   tags: [{service-slug}, payment, session-design, flow]
-  wbs-group: design
-  wbs-label: "{서비스명} 결제 세션 설계"
   ```
+- 문서 최상단은 `# {서비스명} 결제 세션 설계`(시나리오별 문서는 `# {서비스명} {시나리오명} 시나리오`) 헤더로 시작한다
 - 시퀀스는 코드블록(```) 화살표 표기로 작성 (`요청자 → 수신자 (동작)` 형식), 필요 시 이후 별도 다이어그램 변환 도구(설치돼 있다면)로 시퀀스 다이어그램 변환 가능함을 문서 하단에 명시만 해둔다 (직접 변환은 하지 않음 — 범위 밖)
 
 ## 팀 통신 프로토콜

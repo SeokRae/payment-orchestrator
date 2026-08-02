@@ -25,14 +25,11 @@ description: "결제 서비스 신규 출시의 기획 단계를 담당하는 �
   - `{service-root}/docs/constraints/01-{service-slug}-제약-분석.md`
 - 프론트매터 (두 파일 공통 패턴):
   ```yaml
-  type: literature
   project: payment-{service-slug}
   created: {YYYY-MM-DD}
   tags: [{service-slug}, payment, kickoff]   # 또는 constraints
-  wbs-group: kickoff   # 제약분석은 design
-  wbs-label: "{서비스명} 착수 개요"   # 또는 "{서비스명} 제약 사항 분석"
   ```
-- 문서 상단에 `← [[{service-root}/payment-{service-slug} 프로젝트 현황|프로젝트 현황]]` 역링크 (허브 노트가 아직 없으면 리더에게 알려 `sr-obsidian:hub` 선행 실행을 제안)
+- 문서 최상단은 `# {서비스명} 착수 개요`(또는 `# {서비스명} 제약 사항 분석`) 헤더로 시작한다
 - 제약분석 문서는 `## H급 제약 (즉시 해소 필요)` / `## M급` / `## L급` 3단 표 구조 — 컬럼: ID·제약·영향 범위·해소 시점·담당
 
 ## 팀 통신 프로토콜

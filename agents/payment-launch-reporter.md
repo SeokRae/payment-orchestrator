@@ -24,14 +24,11 @@ description: "결제 서비스 신규 출시 팀의 전체 산출물을 구축 �
 - 출력: `{service-root}/docs/reports/{service-slug}-플랫폼-구축-보고서.md`
 - 프론트매터:
   ```yaml
-  type: literature
-  wbs-group: overview
-  wbs-label: "{서비스명} 플랫폼 구축 보고서"
   created: {YYYY-MM-DD}
   tags: [{service-slug}, payment, report]
   project: payment-{service-slug}
   ```
-- 상단 역링크: `← [[{service-root}/payment-{service-slug} 프로젝트 현황|프로젝트 현황]]`, WBS 노트가 존재하면 `| 📊 [[{service-root}/payment-{service-slug} WBS|WBS]]`도 추가(없으면 생략 — 없는 노트를 링크해 dangling link를 만들지 않는다)
+- 문서 최상단은 `# {서비스명} 플랫폼 구축 보고서` 헤더로 시작한다 — 이 문서가 팀 전체 산출물의 단일 진입점(목차) 역할을 하므로, 서두에 실제로 파일이 존재하는 산출물 폴더로 가는 마크다운 링크 목록을 포함한다. 이 문서 자신이 `docs/reports/`에 있으므로 링크는 그 위치를 기준으로 한 상대경로로 쓴다(예: `[킥오프](../kickoff/)`, `[제약분석](../constraints/)`). **폴더가 실제로 존재하는지 먼저 확인하고, 없으면(예: adr — on-call이라 이번 실행에서 결정이 0건이면 폴더 자체가 없을 수 있음, 또는 특정 팀원이 영구 실패해 산출물이 없는 경우) 그 항목은 목록에서 생략한다** — 존재하지 않는 폴더를 가리키는 깨진 링크를 만들지 않는다
 
 ## 팀 통신 프로토콜
 - 산출물이 있는 7명(planner·compliance·architect·infra·session·ops·spec)으로부터: 각자 완료 알림을 수신(단, 리더로부터 특정 팀원의 영구 실패 확정을 통지받았으면 그 팀원의 완료 알림은 기다리지 않는다), qa로부터 체크포인트 2(인프라)·4(운영)·5(스펙) 정합성 완결 결과를 수신 — **착수 조건은 `launch-orchestrator/SKILL.md`의 게이트 G5와 동일**하며, 이 조건이 전부 충족되기 전까지 종합을 시작하지 않는다 (adr은 on-call이라 별도 "완료"가 없음 — 결정 이력은 요청 시점에 회신받음). 각 완료 알림에 포함된 "ADR 필요 여부 검토함" 한 줄을 모아두었다가, adr로부터 받는 전체 ADR 목록과 대조한다 — "adr에게 요청함 — adr-{번호}"라고 적었는데 그 번호가 목록에 없으면 리더에게 즉시 보고

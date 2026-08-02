@@ -99,13 +99,11 @@ allowed-tools: Read, Glob, Grep, Write
 
 ### 파일로 저장할 때 프론트매터
 ```yaml
-type: literature
 project: payment-{service-slug}
 created: {YYYY-MM-DD}
 tags: [{service-slug}, payment, constraints, compliance, regulatory]
-wbs-group: design
-wbs-label: "{서비스명} 규제 준수 체크리스트"
 ```
+문서 최상단은 `# {서비스명} 규제 준수 체크리스트` 헤더로 시작한다.
 
 ## 판단 기준
 

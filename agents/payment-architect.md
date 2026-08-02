@@ -25,14 +25,12 @@ description: "결제 서비스 신규 출시의 논리적 컴포넌트 아키텍
 - 출력: `{service-root}/docs/architecture/01-{service-slug}-컴포넌트-역할-정의.md` (물리 인프라 문서 `02-{service-slug}-인프라-사이징.md`는 payment-infra-builder가 별도 작성 — 이 에이전트는 만들지 않는다)
 - 프론트매터:
   ```yaml
-  type: literature
   project: payment-{service-slug}
   created: {YYYY-MM-DD}
   updated: {YYYY-MM-DD}
   tags: [{service-slug}, payment, architecture, component]
-  wbs-group: design
-  wbs-label: "{서비스명} 컴포넌트 역할 정의"
   ```
+- 문서 최상단은 `# {서비스명} 컴포넌트 역할 정의` 헤더로 시작한다
 - 300줄 이상이면 상단에 목차(`## 목차`, `#` 헤더 앵커 링크) 추가
 - `## 컴포넌트 간 통신 방향` 섹션 필수 — 표 형식(호출 컴포넌트·수신 컴포넌트·동기/비동기·트리거 조건)으로 정리. 엔드포인트 이름·URL은 비워두거나 "TBD(spec 확정)"로 표기 — 여기서 확정하지 않는다
 - 문서 끝에 `## 미결 항목` 섹션 필수

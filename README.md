@@ -1,8 +1,13 @@
 # payment-launch-orchestrator
 
-> 신규 결제/PG 서비스 출시를 기획부터 구축 보고서까지, **10명의 AI 에이전트**가 팀으로 자동화하는 [Claude Code](https://claude.com/claude-code) 하네스입니다.
+> 신규 결제/PG(Payment Gateway, 결제대행사) 서비스 출시를 기획부터 구축 보고서까지, **10명의 AI 에이전트**가 팀으로 자동화하는 [Claude Code](https://claude.com/claude-code) 하네스입니다.
 
-기획(킥오프·제약분석) → 규제 준수 심층 검토 → 논리 아키텍처 설계(QA 게이트) → (물리 인프라 설계 ∥ 트랜잭션 세션설계 ∥ 운영전략, 각각 완료 직후 QA 게이트) → 인터페이스 스펙(QA 게이트) → 구축 보고서까지, 결제 서비스 하나를 출시 준비하는 데 필요한 설계 문서 세트를 한 번에 만듭니다. (QA 게이트는 architect 이후 5개 체크포인트에 적용되며, 그 앞의 기획·규제 심층 검토 단계에는 별도 게이트가 없습니다.)
+기획(킥오프·제약분석) → 규제 준수 심층 검토 → 논리 아키텍처 설계(QA 게이트) → (물리 인프라 설계 ∥ 트랜잭션 세션설계 ∥ 운영전략, 각각 완료 직후 QA 게이트) → 인터페이스 스펙(QA 게이트) → 구축 보고서까지, 결제 서비스 하나를 출시 준비하는 데 필요한 **설계 문서 세트**를 한 번에 만듭니다. (QA 게이트는 architect 이후 5개 체크포인트에 적용되며, 그 앞의 기획·규제 심층 검토 단계에는 별도 게이트가 없습니다.)
+
+> **시작 전에 알아두면 좋은 것**
+> - **설계 문서만 만듭니다** — 실제 코드 구현과 그 코드가 스펙대로 동작하는지 확인하는 "개발 QA"는 범위 밖입니다(아래 "설계 범위" 참조). 산출물은 완성본이 아니라 곳곳에 (미결)·(미확인)·(미확보) 표기가 남은 초안이며, 사람의 최종 확인이 필요합니다.
+> - 규제 체크리스트(`compliance-review`)는 **한국 법제 기준**(전자금융거래법·특정금융정보법 등, 리서치 시점 기준)입니다 — 해외 연동 시나리오도 다루지만 판단 근거 법령 자체는 한국 기준입니다.
+> - **처음 실행할 땐 가볍지 않습니다** — 신규 서비스로 `launch-orchestrator`를 트리거하면 "맛보기" 단계 없이 10명 전원이 곧바로 스폰되는 전체 파이프라인이 그대로 실행됩니다. 정상 흐름 기준 에이전트 호출 약 20회 안팎(QA 재검증 왕복이 늘면 그 이상), 수십 분~여러 시간 규모로 예상하세요. 가볍게 먼저 확인해보고 싶다면 전체 팀 대신 `compliance-review`나 `qa-review`를 단독으로 트리거할 수 있습니다. (이미 만든 서비스에 대한 "제약분석만 다시" 같은 **후속 요청은 예외**입니다 — 영향받는 팀원 1명만 재소집되므로 훨씬 가볍습니다. 아래 "후속 작업" 참조.)
 
 > 원본은 개인 Obsidian PARA vault에서 `harness:harness` 메타 스킬로 반복 확장하며 만들어졌습니다 — 규제 전문가 분리, 인프라/어플리케이션 역할 분리, 점진적 QA 게이트 순서로 4단계에 걸쳐 진화했습니다. 이 저장소는 그 결과물을 독립적으로 재사용할 수 있게 옮긴 것입니다.
 
@@ -30,24 +35,24 @@
 | 스킬 | 트리거 문구 예시 | 역할 |
 |---|---|---|
 | [`launch-orchestrator`](skills/launch-orchestrator/SKILL.md) | "신규 결제 서비스 출시", "PG 서비스 구축 하네스" | 팀 전체를 조율하는 메인 스킬 — 10명 스폰, 착수 게이트 G1~G5 관리, 부분 재실행(특정 팀원만 재작업) 처리 |
-| [`compliance-review`](skills/compliance-review/SKILL.md) | "규제 검토", "PG 등록 대상인지 확인", "PCI-DSS 대응해야 하나" | 전자금융거래법 등록/인허가·PCI-DSS·개인정보보호법(국외이전)·특정금융정보법(AML/VASP)·해외 PSP 연동(외국환거래법·GDPR) 5개 규제 도메인 체크리스트로 H/M/L 등급 판정. `references/regulatory-checklist.md`에 77개 항목이 확인 상태(✅/⚠️/❓)와 함께 정리돼 있습니다. **법률 자문이 아닙니다.** |
+| [`compliance-review`](skills/compliance-review/SKILL.md) | "규제 검토", "PG 등록 대상인지 확인", "PCI-DSS 대응해야 하나" | 전자금융거래법(국내 PG·전자결제 등록/인허가 근거법) 등록/인허가·PCI-DSS(카드 데이터 보안 국제표준)·개인정보보호법(국외이전)·특정금융정보법(특금법, AML/가상자산사업자(VASP) 규제)·해외 PSP(결제서비스제공자) 연동(외국환거래법·GDPR) 5개 규제 도메인 체크리스트로 H/M/L 등급 판정. `references/regulatory-checklist.md`에 77개 항목이 확인 상태(✅/⚠️/❓)와 함께 정리돼 있습니다. **법률 자문이 아닙니다.** |
 | [`qa-review`](skills/qa-review/SKILL.md) | "설계 문서 정합성 검증", "이 문서들 앞뒤가 맞나 확인", "QA 해줘" | 설계 문서 간 경계면 교차검증(PASS/FIX/GAP 판정). **"문서 QA"만 다룹니다** — 실제 구현 코드가 스펙대로 동작하는지 확인하는 "개발 QA"는 범위 밖입니다(아래 "설계 범위" 참조). |
 
 `compliance-review`·`qa-review` 2개는 팀 전체를 돌리지 않고 단독으로도 쓸 수 있습니다 — 오케스트레이터 안에서 각각 compliance·qa 팀원이 내부적으로 호출하는 것과 동일한 스킬입니다. `launch-orchestrator`는 그 자체가 오케스트레이터라 "단독 실행"이라는 구분이 의미가 없습니다.
 
 ## 사용법
 
-1. 설치 — 둘 중 편한 방법으로:
-   - **플러그인으로 설치**: `.claude-plugin/plugin.json`·`marketplace.json`이 모두 포함돼 있어 아래 두 방법 다 됩니다. 플러그인 이름은 `payments`이며, 설치되면 스킬은 `payments:launch-orchestrator` 형태로 노출됩니다.
+1. 설치 — 상황에 맞게 고르세요:
+   - **플러그인으로 설치** (여러 프로젝트에서 반복 재사용할 계획이면 이쪽을 권장): `.claude-plugin/plugin.json`·`marketplace.json`이 모두 포함돼 있어 아래 두 방법 다 됩니다. 플러그인 이름은 `payments`이며, 설치되면 스킬은 `payments:launch-orchestrator` 형태로 노출됩니다.
      - marketplace 등록: `claude plugin marketplace add <이 저장소 경로 또는 git URL>` 후 `claude plugin install payments@sr` (마켓플레이스 이름은 `sr` — 실사용 검증 완료: `claude plugin details payments@sr`로 스킬 3개·에이전트 10개 정상 인식 확인됨)
      - 또는 등록 없이 바로 로드: `claude --plugin-dir <이 저장소 경로>`
-   - **디렉터리 복사**: 이 저장소의 `agents/`·`skills/` 안의 파일들을 대상 프로젝트의 `.claude/agents/`·`.claude/skills/`로 복사합니다(marketplace 등록 없이 즉시 사용 가능, 이식 방법은 아래 "내 프로젝트로 이식하기" 참조).
+   - **디렉터리 복사** (지금 이 프로젝트 하나에서만 빠르게 써보려면 이쪽이 더 간단합니다): 이 저장소의 `agents/`·`skills/` 안의 파일들을 대상 프로젝트의 `.claude/agents/`·`.claude/skills/`로 복사합니다(marketplace 등록 없이 즉시 사용 가능, 이식 방법은 아래 "내 프로젝트로 이식하기" 참조).
 2. 세션에 입력합니다:
    ```
    새 결제 서비스 'xyz-pay' 출시 준비 문서 만들어줘 — 해외 카드사 다이렉트 연동, Q3 목표
    ```
 3. `launch-orchestrator` 스킬이 트리거되어 10명 팀이 자동으로 조율하며 작업합니다.
-4. 결과는 `{service-root}/docs/{kickoff,constraints,architecture,session-design,operations,specs,adr,reports}/`에 생성됩니다.
+4. 결과는 `{service-root}`(문서 저장 위치 — 최초 실행 시 하네스가 직접 물어보며 정합니다. 자세한 내용은 아래 "전제 조건" 참조)`/docs/{kickoff,constraints,architecture,session-design,operations,specs,adr,reports}/`에 생성됩니다.
 
 ### 후속 작업
 
@@ -55,20 +60,16 @@
 
 ## 전제 조건
 
-이 하네스는 문서를 어디에 둘지 **특정 폴더 구조를 강제하지 않습니다.** 오케스트레이터 Phase 0가 실행 시점에 `{service-root}`(문서 루트 경로)를 프로젝트에 이미 있는 컨벤션에서 찾거나, 없으면 사용자에게 직접 물어서 정합니다 — Obsidian PARA vault든 일반 저장소든 그대로 동작합니다.
+이 하네스는 문서를 어디에 둘지 **특정 폴더 구조를 강제하지 않습니다.** 오케스트레이터 Phase 0가 실행 시점에 `{service-root}`(문서 루트 경로)를 프로젝트에 이미 있는 컨벤션에서 찾거나, 없으면 사용자에게 직접 물어서 정합니다.
 
-다만 아래 두 가지는 Obsidian vault 관례를 선택적으로 반영합니다(없어도 핵심 동작에는 지장 없습니다):
-
-- 허브 노트(`{service-root}/payment-{service-slug} 프로젝트 현황.md`) 생성은 별도 플러그인([`sr-obsidian`](https://github.com/SeokRae/sr-obsidian))의 `hub` 스킬(대안: `scaffold`)을 재사용하도록 설계돼 있습니다 — 없으면 Phase 1에서 사용자가 건너뛰도록 선택하면 됩니다.
-- 문서 프론트매터(`type: literature`, `wbs-group`, `wbs-label` 등)는 Dataview 기반 자동 Gantt 집계를 활용하는 vault 관례입니다. 이런 관례가 없는 프로젝트라면 프론트매터 필드는 무시해도 동작에는 지장이 없습니다.
+**외부 플러그인·노트 앱에 전혀 의존하지 않습니다.** Obsidian이 설치돼 있을 필요도, 다른 노트 도구가 있을 필요도 없습니다 — 문서 구조는 `docs/{kickoff,constraints,architecture,session-design,operations,specs,adr,reports}/` 표준 폴더와 각 문서 최상단의 `# 제목` 헤더, 표준 마크다운만으로 하네스 자체가 자기완결적으로 구성합니다. 특수 프론트매터 필드나 wiki-link(`[[...]]`) 문법도 쓰지 않습니다 — 일반 마크다운 뷰어·에디터 어디서나 그대로 읽힙니다. `reporter`가 마지막에 쓰는 구축 보고서(`docs/reports/{service-slug}-플랫폼-구축-보고서.md`)가 전체 산출물로 가는 단일 진입점(목차) 역할을 합니다.
 
 ## 내 프로젝트로 이식하기
 
 1. `agents/payment-*.md` 10개를 대상 프로젝트의 `.claude/agents/`로, `skills/{launch-orchestrator,compliance-review,qa-review}/` 3개 디렉터리를 대상 프로젝트의 `.claude/skills/`로 복사합니다(Claude Code는 프로젝트 로컬 에이전트·스킬을 `.claude/agents/`·`.claude/skills/`에서 찾으므로, 복사할 때 이 경로로 넣어야 합니다).
 2. 문서 루트(`{service-root}`)는 Phase 0에서 실행 시점에 물어보므로 파일을 미리 고칠 필요는 없습니다 — 다만 항상 같은 위치를 쓰고 싶다면 각 에이전트 파일의 `{service-root}` 표기를 고정 경로로 바꿔도 됩니다.
-3. Obsidian 허브 노트를 쓰지 않는 프로젝트라면 `payment-planner.md`·`launch-orchestrator/SKILL.md`의 "허브 노트 확인" 단계를 생략하도록 안내만 해두면 됩니다(Phase 1에서 사용자가 건너뛰기를 선택할 수 있음).
-4. `compliance-review`의 체크리스트는 **한국 결제 규제 기준**(2026-08-01 리서치 시점)입니다 — 해외 시장·다른 업종이면 `references/regulatory-checklist.md` 자체를 새로 조사해 교체해야 합니다.
-5. `CLAUDE.md`에 하네스 포인터를 프로젝트 컨벤션에 맞춰 추가합니다(이 저장소의 `CLAUDE.md` 형식 참고).
+3. `compliance-review`의 체크리스트는 **한국 결제 규제 기준**(2026-08-01 리서치 시점)입니다 — 해외 시장·다른 업종이면 `references/regulatory-checklist.md` 자체를 새로 조사해 교체해야 합니다.
+4. `CLAUDE.md`에 하네스 포인터를 프로젝트 컨벤션에 맞춰 추가합니다(이 저장소의 `CLAUDE.md` 형식 참고).
 
 ## 설계 범위 — "문서 QA"와 "개발 QA"
 

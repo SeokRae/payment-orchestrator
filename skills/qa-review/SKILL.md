@@ -74,4 +74,4 @@ GAP  → FIX와 동일하게 처리하되, "누락"이므로 생산자가 새로
 ## 참고 자료
 
 - 검증 대상 문서 위치: `{service-root}/docs/**`
-- 각 문서 프론트매터의 `wbs-label`로 문서 성격 파악 가능
+- 각 문서 최상단 `# 제목` 헤더와 소속 폴더(`kickoff/`·`constraints/`·`architecture/` 등)로 문서 성격 파악 가능

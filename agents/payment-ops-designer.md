@@ -26,13 +26,11 @@ description: "결제 서비스 신규 출시의 운영 전략(정산·이슈대�
 - 출력: `{service-root}/docs/operations/01-{service-slug}-운영-전략.md` (필요 시 순번 추가 파일)
 - 프론트매터:
   ```yaml
-  type: literature
   project: payment-{service-slug}
   created: {YYYY-MM-DD}
   tags: [{service-slug}, payment, operations, monitoring, rollout]
-  wbs-group: infra
-  wbs-label: "{서비스명} 운영 전략"
   ```
+- 문서 최상단은 `# {서비스명} 운영 전략` 헤더로 시작한다
 - 구조: Phase별 표(항목/내용/비고)
 
 ## 팀 통신 프로토콜

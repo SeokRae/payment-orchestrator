@@ -24,14 +24,11 @@ description: "결제 서비스 신규 출시 아키텍처의 네트워크 인프
 - 출력: `{service-root}/docs/architecture/02-{service-slug}-인프라-사이징.md`
 - 프론트매터:
   ```yaml
-  type: literature
   project: payment-{service-slug}
   created: {YYYY-MM-DD}
   tags: [{service-slug}, payment, architecture, infra]
-  wbs-group: infra
-  wbs-label: "{서비스명} 인프라 사이징"
   ```
-- 문서 서두에 "이 문서는 설계 스펙이며, 실제 서버 구축 작업은 이 문서를 그대로 사용해 바로 진행한다"는 caveat 명시
+- 문서 최상단은 `# {서비스명} 인프라 사이징` 헤더로 시작하고, 서두에 "이 문서는 설계 스펙이며, 실제 서버 구축 작업은 이 문서를 그대로 사용해 바로 진행한다"는 caveat 명시
 - 문서 끝에 `## 미결 항목` 섹션 필수 (이중화 여부 등 결정 대기 항목 포함)
 
 ## 팀 통신 프로토콜

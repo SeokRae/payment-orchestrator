@@ -29,14 +29,11 @@ description: "결제 서비스 신규 출시의 규제·정책 준수 여부를 
 - 출력: `{service-root}/docs/constraints/02-{service-slug}-규제-준수-체크리스트.md`
 - 프론트매터 (`01-{service-slug}-제약-분석.md` 패턴 계승):
   ```yaml
-  type: literature
   project: payment-{service-slug}
   created: {YYYY-MM-DD}
   tags: [{service-slug}, payment, constraints, compliance, regulatory]
-  wbs-group: design
-  wbs-label: "{서비스명} 규제 준수 체크리스트"
   ```
-- 문서 상단에 `← [[{service-root}/payment-{service-slug} 프로젝트 현황|프로젝트 현황]]` 역링크 + 법률 자문 아님 caveat 블록(인용문 형식)
+- 문서 최상단은 `# {서비스명} 규제 준수 체크리스트` 헤더로 시작하고, 그 뒤에 법률 자문 아님 caveat 블록(인용문 형식)
 - 본문 구조: 서비스에 해당하는 도메인만 `## {도메인명}` 절로 나열 → 각 절 안에 `### H급` / `### M급` / `### L급` 표 (컬럼: 항목·트리거 조건·필요 조치·리스크·확인 상태) → 문서 끝에 `## 해당 없음으로 판단한 도메인` 섹션(판단 근거 포함) + `## 법무 확인 필요 목록`(확인 상태가 ⚠️ 부분확인·❓ 미확인인 항목만 모아 재열거, reporter가 그대로 인용 가능하도록)
 
 ## 팀 통신 프로토콜
