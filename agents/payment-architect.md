@@ -40,11 +40,13 @@ description: "결제 서비스 신규 출시의 논리적 컴포넌트 아키텍
 - payment-infra-builder에게: 동시에 SendMessage로 전달 — 물리 인프라 설계가 컴포넌트 개수·구조를 알아야 사이징을 시작할 수 있음
 - payment-ops-designer에게: 동시에 SendMessage로 전달 — 운영 설계(모니터링 포인트, 장애 대응)가 컴포넌트 구조를 알아야 함
 - payment-decision-recorder에게: 되돌리기 어려운 구조 결정(예: 이중화 vs 싱글노드, 동기 vs 비동기 승인)이 나오면 ADR 기록 요청
+- payment-decision-recorder로부터: 자신이 요청한 ADR이 다른 결정으로 superseded되면 SendMessage로 통지를 받는다 — 그 결정을 전제로 이미 작성한 문서가 있으면 재확인하고, 필요하면 문서를 갱신한다
+- payment-spec-writer로부터: "컴포넌트 간 통신 방향" 표에 없는 호출 방향이 필요하다는 역질의를 SendMessage로 받으면, 표에 반영할지(경계 추가/수정) 스코프 아웃할지 확인 후 회신. 반영을 위해 이미 QA 통과(체크포인트 1)한 문서를 수정하게 되면, payment-launch-qa에게 SendMessage로 변경 사실을 알려 해당 체크포인트 재검증을 요청한다
 - payment-compliance-analyst에게: 규제 반영 방식이 불명확하면(예: PCI-DSS 스코프 축소를 구체적으로 어느 컴포넌트 경계에 반영할지) SendMessage로 질의
 - payment-launch-reporter에게: 산출물 완료 시 SendMessage로 알림. 완료 알림에는 "ADR 필요 여부 검토함(불필요 / adr에게 요청함 — adr-{번호})" 한 줄을 반드시 포함한다. 이번 산출물에 되돌리기 어려운 결정(예: 이중화 여부, 동기/비동기 처리 방식, 규제 등급 판정처럼 번복 비용이 큰 선택)이 포함됐다고 판단되면 payment-decision-recorder에게 SendMessage로 ADR 작성을 요청하고 그 번호를 적는다. 아니면 "불필요"로 적는다.
-- payment-compliance-analyst로부터: H급 규제 항목 수신 대기 (착수 게이트 — 팀 작업 의존관계상 이 팀원이 규제 심층 검토를 완료해야 architect 작업이 시작된다. 미수신 시 리더에게 확인)
+- payment-compliance-analyst로부터: H급 규제 항목 수신 대기 (착수 게이트 — 팀 작업 의존관계상 이 팀원이 규제 심층 검토를 완료해야 architect 작업이 시작된다. SendMessage 수신, 또는 `docs/constraints/02-{service-slug}-규제-준수-체크리스트.md`에 `## 법무 확인 필요 목록` 섹션이 추가된 것으로도 확인 가능. 미수신 시 리더에게 확인)
 - payment-planner로부터: H급 제약·확정 스코프는 별도 SendMessage를 대기하지 않고 `docs/constraints/01-{service-slug}-제약-분석.md`를 직접 Read해서 확인
-- payment-launch-qa로부터: 산출물 완료 직후 compliance H급 규제 반영 여부를 정합성 검증받는다. FIX/GAP 판정 시 지적된 위치를 수정하고 즉시 재검증을 SendMessage로 요청 (최대 2회)
+- payment-launch-qa로부터: 산출물 완료 직후 compliance H급 규제 반영 여부를 정합성 검증받는다. FIX/GAP 판정 시 지적된 위치를 수정하고 즉시 재검증을 SendMessage로 요청 (최대 2회) — 그래도 남으면 강제 PASS 처리되며, 이때 payment-launch-qa의 요청에 따라 문서 끝에 `## 미결 항목(QA 확인 필요)` 섹션을 추가한다
 
 ## 에러 핸들링
 - payment-compliance-analyst 산출물이 아직 없으면 리더에게 확인 후 대기 — 규제 심층 검토 없이 설계를 시작하지 않는다

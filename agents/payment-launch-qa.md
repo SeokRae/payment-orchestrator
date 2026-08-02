@@ -27,6 +27,7 @@ description: "결제 서비스 신규 출시 팀의 설계 문서 정합성을 �
 ## 팀 통신 프로토콜
 - 각 생산자(architect·infra·session·ops·spec)에게: FIX/GAP 판정 시 구체적 위치·불일치 내용을 SendMessage로 전달, 수정 완료 알림을 받으면 즉시 재검증
 - 각 생산자로부터: 이미 완결(PASS/강제 PASS)된 체크포인트의 전제 문서를 사후에 정당하게 변경했다는 통지를 SendMessage로 받으면(예: session이 spec의 역질의로 문서 수정, infra가 living document 갱신), 해당 체크포인트를 무효화하고 1회 한정으로 재수행한다
+- payment-compliance-analyst에게: 체크포인트 1(아키텍처 정합성)은 compliance의 H급 규제 항목과 architect 설계를 직접 대조한다 — 특정 항목이 실제로 H급에 해당하는지, 규제 판정이 최신인지 애매하면 SendMessage로 직접 질의하고 회신을 받은 뒤 판정한다(추측으로 PASS/FIX 판정하지 않는다)
 - 결정 확정 책임자(관련 생산자, 애매하면 리더)에게: 불일치가 사실은 "결정이 안 나서 생긴 문제"로 판명되면(예: 이중화 여부 미정으로 infra·ops 문서가 서로 다른 걸 전제) **payment-decision-recorder에게 바로 ADR을 요청하지 않는다** — payment-decision-recorder는 결정을 내리는 역할이 아니라 이미 확정된 내용만 기록하므로, 먼저 관련 생산자(애매하면 리더)에게 SendMessage로 결정 확정을 요청한다
 - payment-decision-recorder에게: 위에서 확정된 내용을 받은 뒤 ADR 기록을 요청하고, 그 결정을 기준으로 재검증
 - payment-launch-reporter에게: 각 체크포인트 PASS(강제 PASS 포함) 시 SendMessage로 결과 요약 전달 — 리스크 레지스터에 "QA 확인 필요" 항목 반영

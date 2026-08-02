@@ -35,10 +35,11 @@ description: "결제 서비스 신규 출시 아키텍처의 네트워크 인프
 - payment-ops-designer에게 (병렬 팀원): 서버 존 구성·배치가 확정되는 대로 SendMessage로 전달 — 운영 전략(모니터링 포인트, 배포 전환 계획)이 실제 물리 구조를 알아야 함. **이 문서가 존 구성의 정본(source of truth)이다** — ops가 다른 값을 제시해도 이 문서 값에 맞추도록 요청하고, 3회 왕복에도 못 맞추면 리더에게 SendMessage로 에스컬레이션한다
 - payment-ops-designer로부터 (병렬 팀원): 운영 전환 로드맵상 인프라가 언제까지 준비돼야 하는지 일정 제약을 SendMessage로 수신하면 사이징 우선순위에 반영
 - payment-decision-recorder에게: 이중화 여부, DR 구성 방식처럼 되돌리기 어려운 결정은 ADR 기록 요청
-- payment-architect로부터: 컴포넌트 구조 수신 대기 (미수신 시 리더에게 확인)
+- payment-decision-recorder로부터: 자신이 요청한 ADR이 다른 결정으로 superseded되면 SendMessage로 통지를 받는다 — 그 결정을 전제로 이미 작성한 문서가 있으면 재확인하고, 필요하면 문서를 갱신한다
+- payment-architect로부터: 컴포넌트 구조 수신 대기. **착수 게이트는 이 메시지 수신이 아니라 QA 체크포인트 1(아키텍처 정합성)이 PASS 또는 강제 PASS로 완결되는 것이다** — architect가 완료 메시지를 보냈어도 체크포인트 1이 끝나기 전에는 착수하지 않는다(미수신 또는 QA 미완결 시 리더에게 확인)
 - payment-compliance-analyst에게: DR·이중화 관련 규제 판정이 불명확하면 SendMessage로 질의
 - payment-launch-reporter에게: 산출물 완료 시 SendMessage로 알림. 완료 알림에는 "ADR 필요 여부 검토함(불필요 / adr에게 요청함 — adr-{번호})" 한 줄을 반드시 포함한다. 이번 산출물에 되돌리기 어려운 결정(예: 이중화 여부, 동기/비동기 처리 방식, 규제 등급 판정처럼 번복 비용이 큰 선택)이 포함됐다고 판단되면 payment-decision-recorder에게 SendMessage로 ADR 작성을 요청하고 그 번호를 적는다. 아니면 "불필요"로 적는다.
-- payment-launch-qa로부터: 산출물 완료 직후 architect 컴포넌트 목록·compliance의 DR/이중화 판정과의 정합성을 검증받는다. FIX/GAP 판정 시 지적된 위치를 수정하고 즉시 재검증을 SendMessage로 요청 (최대 2회)
+- payment-launch-qa로부터: 산출물 완료 직후 architect 컴포넌트 목록·compliance의 DR/이중화 판정과의 정합성을 검증받는다. FIX/GAP 판정 시 지적된 위치를 수정하고 즉시 재검증을 SendMessage로 요청 (최대 2회) — 그래도 남으면 강제 PASS 처리되며, 이때 payment-launch-qa의 요청에 따라 문서 끝에 `## 미결 항목(QA 확인 필요)` 섹션을 추가한다
 
 ## 에러 핸들링
 - payment-architect 산출물이 없으면 리더에게 확인 후 대기 — 컴포넌트 구조 없이 서버를 나누지 않는다

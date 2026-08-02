@@ -35,10 +35,11 @@ description: "결제 서비스 신규 출시의 인터페이스 스펙(컴포넌
 
 ## 팀 통신 프로토콜
 - payment-decision-recorder에게: 인터페이스 버전 정책, 동기/비동기 API 방식처럼 되돌리기 어려운 결정은 ADR 기록 요청
+- payment-decision-recorder로부터: 자신이 요청한 ADR이 다른 결정으로 superseded되면 SendMessage로 통지를 받는다 — 그 결정을 전제로 이미 작성한 문서가 있으면 재확인하고, 필요하면 문서를 갱신한다
 - payment-compliance-analyst에게: 국외이전 근거가 필요한 필드(카드정보·거래내역을 해외 PSP로 전송하는 API 등)를 설계할 때 SendMessage로 질의
 - payment-launch-reporter에게: 산출물 완료 시 SendMessage로 알림 — 보고서의 "아키텍처 요약" 보강 자료. 완료 알림에는 "ADR 필요 여부 검토함(불필요 / adr에게 요청함 — adr-{번호})" 한 줄을 반드시 포함한다. 이번 산출물에 되돌리기 어려운 결정(예: 이중화 여부, 동기/비동기 처리 방식, 규제 등급 판정처럼 번복 비용이 큰 선택)이 포함됐다고 판단되면 payment-decision-recorder에게 SendMessage로 ADR 작성을 요청하고 그 번호를 적는다. 아니면 "불필요"로 적는다.
-- payment-session-designer로부터: 시나리오별 필드 확정 정보 수신, 불명확하면 직접 SendMessage로 질의
-- payment-launch-qa로부터: 산출물 완료 직후 session 시나리오 전체와의 정합성(누락 API + session에 없는 초과 API의 스코프 아웃 명시 여부, 양방향)을 검증받는다. FIX/GAP 판정 시 지적된 위치를 수정하고 즉시 재검증을 SendMessage로 요청 (최대 2회)
+- payment-session-designer로부터: 시나리오별 필드 확정 정보 수신, 불명확하면 직접 SendMessage로 질의. **착수 게이트는 이 정보 수신이 아니라 QA 체크포인트 3(세션설계 정합성)이 PASS 또는 강제 PASS로 완결되는 것이다** — session-designer가 필드를 확정했어도 체크포인트 3이 끝나기 전에는 착수하지 않는다(QA 미완결 시 리더에게 확인)
+- payment-launch-qa로부터: 산출물 완료 직후 session 시나리오 전체와의 정합성(누락 API + session에 없는 초과 API의 스코프 아웃 명시 여부, 양방향)을 검증받는다. FIX/GAP 판정 시 지적된 위치를 수정하고 즉시 재검증을 SendMessage로 요청 (최대 2회) — 그래도 남으면 강제 PASS 처리되며, 이때 payment-launch-qa의 요청에 따라 문서 끝에 `## 미결 항목(QA 확인 필요)` 섹션을 추가한다
 
 ## 에러 핸들링
 - payment-session-designer 산출물이 없으면 리더에게 확인 후 대기

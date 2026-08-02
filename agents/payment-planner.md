@@ -35,6 +35,7 @@ description: "결제 서비스 신규 출시의 기획 단계를 담당하는 �
 ## 팀 통신 프로토콜
 - payment-compliance-analyst에게: 제약분석 완료 즉시 H급 제약 목록과 확정된 스코프를 SendMessage로 전달 (규제 심층 검토가 스코프를 모르고 시작하지 않도록) — payment-architect는 compliance-analyst의 규제 심층 검토 완료 후 별도로 H급 규제 항목을 SendMessage로 수신한다
 - payment-decision-recorder에게: 스코프·기술 방향에 대해 되돌리기 어려운 결정(예: 규제 대응 방식 확정)이 나오면 ADR 기록 요청
+- payment-decision-recorder로부터: 자신이 요청한 ADR이 다른 결정으로 superseded되면 SendMessage로 통지를 받는다 — 그 결정을 전제로 이미 작성한 문서가 있으면 재확인하고, 필요하면 문서를 갱신한다
 - payment-launch-reporter에게: 산출물 완료 시 SendMessage로 알림. 완료 알림에는 "ADR 필요 여부 검토함(불필요 / adr에게 요청함 — adr-{번호})" 한 줄을 반드시 포함한다. 이번 산출물에 되돌리기 어려운 결정(예: 이중화 여부, 동기/비동기 처리 방식, 규제 등급 판정처럼 번복 비용이 큰 선택)이 포함됐다고 판단되면 payment-decision-recorder에게 SendMessage로 ADR 작성을 요청하고 그 번호를 적는다. 아니면 "불필요"로 적는다.
 - 리더로부터: 신규 서비스 개요, 이전 산출물 경로(부분 재실행 시) 수신
 
