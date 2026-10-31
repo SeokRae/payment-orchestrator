@@ -9,9 +9,13 @@ description: "신규 결제/PG 서비스 출시(런칭)를 기획부터 구축 �
 
 **"리더"란** — 이 문서 전체에서 "리더"는 별도로 스폰되는 에이전트가 아니라, **이 스킬을 실행하는 세션(=사용자와 대화 중인 Claude) 자신**을 가리킨다. 리더는 10명의 팀원을 스폰하고, 게이트를 관리하고, 사용자와 직접 대화하는 역할까지 겸한다.
 
-## 실행 모드: 에이전트 팀
+## 실행 모드: 리더가 게이트를 쥐는 에이전트 팀
 
-파이프라인(기획→아키텍처→스펙) + 팬아웃(인프라/세션설계/운영설계 병렬) + 생성-검증(각 생산자 직후 QA 게이트) + 횡단(ADR·규제질의 on-call) 복합 패턴. 단계마다 팀을 새로 만들지 않고, **팀 1개를 처음에 구성**하고 게이트(아래 Phase 2 참조)로 순서를 강제한 뒤 팀원들이 공유 작업 목록에서 자체적으로 작업을 요청(claim)하며 진행한다.
+파이프라인(기획→아키텍처→스펙) + 팬아웃(인프라/세션설계/운영설계 병렬) + 생성-검증(각 생산자 직후 QA 게이트) + 횡단(ADR, 규제 질의 on-call) 복합 패턴입니다. 리더가 게이트 표(Phase 2)를 쥐고, 게이트가 열린 시점에 그 팀원을 `Agent(name:)`으로 스폰해 순서를 강제합니다. 팀원에게는 스폰되는 순간이 착수 시점이라 공유 작업 목록에서 작업을 claim하지 않아요. 게이트 판정과 스폰 이력은 `{service-root}/_launch-workspace/gates.md`에 남깁니다. 리더 컨텍스트가 끊겨도 순서가 리더의 기억에만 기대지 않게 하기 위해서예요.
+
+**전제 도구**: `Agent`(`name` 파라미터)와 `SendMessage`가 세션 도구 목록에 있어야 합니다. 둘 중 하나라도 없으면 팀 실행을 시작하지 않고 사용자에게 알린다(단일 에이전트 실행으로 조용히 퇴화하지 않게). 작업 목록 도구(`TaskCreate`, `TaskUpdate`, `TaskList`)는 쓰지 않습니다. Claude Code 문서 기준으로 이 도구는 Opus 4.7, Sonnet 4.6, Haiku 4.5 이하 모델에서만 기본으로 노출되고, 그 뒤 계열(Opus 4.8, Sonnet 5 이후)은 `CLAUDE_CODE_ENABLE_TODO_TOOLS=1`이나 `--tools` 지정으로 켜야 합니다. 서브에이전트는 부모 세션에 있을 때만 받습니다. 에이전트 팀 실험 플래그는 켜는 방법에 들어 있지 않아요(2026-10-31 세션에서 플래그를 켜도 노출되지 않음을 확인, 출처: code.claude.com/docs/en/tools-reference, code.claude.com/docs/en/whats-new/2026-w33). 노출된 세션이라도 게이트 판정에는 쓰지 않아요. 게이트의 정본은 `gates.md` 하나입니다.
+
+**Workflow 스크립트로 옮기지 않은 이유**: 이 팀은 실행 중간에 사용자 답을 기다리고(UC1~UC3), QA 재검증 종료(무진행 감지)와 REDO 판단, on-call 질의가 미리 정한 목록이 아니라 메시지로 그때그때 생깁니다. 코드가 흐름을 정하는 스크립트와는 맞지 않아요. `Workflow` 도구 역시 런타임과 사용자 요청 여부에 따라 노출이 갈리므로, 옮기면 작업 목록 도구 의존을 다른 선택 도구 의존으로 바꾸는 데 그칩니다.
 
 ## 에이전트 구성
 
@@ -34,7 +38,7 @@ description: "신규 결제/PG 서비스 출시(런칭)를 기획부터 구축 �
 
 팀원(서브에이전트)은 사용자와 직접 대화하지 못하고 리더를 통해서만 통신한다. 이 제약 위에서 아래 3개 지점은 리더가 사용자에게 직접 묻고 답을 팀원에게 전달하는 "사용자 확인 왕복(UC)"을 쓴다.
 
-**불변식 — 게이트(G)와 혼동하지 않는다**: 게이트(G1~G5)는 팀원 착수 순서를 강제하는 차단 조건이고, UC는 차단하지 않는 선택적 보강이다. UC는 게이트 그래프(`TaskCreate`/`addBlockedBy`)에 절대 등장하지 않으며, 모든 UC 질문에는 사전 정의된 무응답 기본값이 있어 파이프라인을 무기한 정지시키지 않는다.
+**불변식 — 게이트(G)와 혼동하지 않는다**: 게이트(G1~G5)는 팀원 착수 순서를 강제하는 차단 조건이고, UC는 차단하지 않는 선택적 보강이다. UC는 게이트 표와 `gates.md`의 착수 조건에 절대 등장하지 않으며, 모든 UC 질문에는 사전 정의된 무응답 기본값이 있어 파이프라인을 무기한 정지시키지 않는다.
 
 | UC | 트리거 시점 | 발신자 | 성격 | 무응답 기본값 |
 |----|-----------|--------|------|--------------|
@@ -65,7 +69,7 @@ description: "신규 결제/PG 서비스 출시(런칭)를 기획부터 구축 �
    - **존재 + 서비스 방향이 근본적으로 바뀜(새 입력)** → **새 실행**. 기본값은 보존이다 — `{service-root}/_launch-workspace/`만 `{service-root}/_launch-workspace_{YYYYMMDD}/`로 이동하고 `docs/`는 자동으로 건드리지 않은 채 Phase 0.5(UC1 역인터뷰 — 방향 변경으로 무효가 된 항목만 대상) 수행 후 Phase 1부터 재실행한다. 기존 `docs/`를 덮어쓰는 것은 사용자가 명시적으로 승인했을 때만 예외적으로 진행한다
 3. 부분 재실행 시: 재작업 대상 팀원 1명만 단독 재소집한다 — 절차는 아래 "부분 재실행 절차" 참조
 
-**부분 재실행 절차 (팀 불필요):** 재작업 대상 팀원 1명만 골라 재소집한다(스폰 방법은 부록 A "1) 팀원 스폰" 참조). 프롬프트에 기존 산출물 경로와 사용자 피드백을 포함해, 산출물을 Read하고 피드백을 반영해 수정하도록 지시한다. **재소집 프롬프트에 "이번은 부분 재실행이라 qa·reporter·adr·compliance 팀원도 스폰돼 있지 않으니, 정의 파일의 'qa 재검증을 받는다'·'reporter에게 알린다'·'adr에게 ADR 기록을 요청한다'·'compliance에게 질의한다' 류 팀 통신 지시는 전부 따르지 말고 완료 즉시 리더에게만 SendMessage로 알려라"를 명시한다** — 그 지시를 그대로 두면 존재하지 않는 상대를 기다리게 된다. 재작업 중 되돌리기 어려운 결정이나 규제 확인이 실제로 필요해지면, 재소집된 팀원은 adr·compliance에게 보내지 않고 그 필요성만 리더에게 보고한다 — 리더가 직접 `compliance-review` 스킬을 호출하거나(규제 확인) 결정 내용을 정리해 사용자에게 확인한다(ADR 필요 시 아래 4번 참조).
+**부분 재실행 절차 (팀 불필요):** 재작업 대상 팀원 1명만 골라 재소집한다(스폰 방법은 부록 A "1) 스폰 시점과 호출" 참조). 프롬프트에 기존 산출물 경로와 사용자 피드백을 포함해, 산출물을 Read하고 피드백을 반영해 수정하도록 지시한다. **재소집 프롬프트에 "이번은 부분 재실행이라 qa·reporter·adr·compliance 팀원도 스폰돼 있지 않으니, 정의 파일의 'qa 재검증을 받는다'·'reporter에게 알린다'·'adr에게 ADR 기록을 요청한다'·'compliance에게 질의한다' 류 팀 통신 지시는 전부 따르지 말고 완료 즉시 리더에게만 SendMessage로 알려라"를 명시한다** — 그 지시를 그대로 두면 존재하지 않는 상대를 기다리게 된다. 재작업 중 되돌리기 어려운 결정이나 규제 확인이 실제로 필요해지면, 재소집된 팀원은 adr·compliance에게 보내지 않고 그 필요성만 리더에게 보고한다 — 리더가 직접 `compliance-review` 스킬을 호출하거나(규제 확인) 결정 내용을 정리해 사용자에게 확인한다(ADR 필요 시 아래 4번 참조).
 
 재작업 완료 후 리더가 직접 수행:
 1. 이 산출물이 QA 체크포인트의 비교 대상이면(예: architect 재작업 → 체크포인트 1), 기존 판정 기록(`{service-root}/_launch-workspace/qa/{NN}-{체크포인트}.md`)이 있는지 확인하고, 있으면 그 파일 상단에 "⚠️ 재작업으로 무효화됨 ({YYYY-MM-DD}, 사유: {재작업 요청 요약})"을 표기해 stale PASS로 오인되지 않게 한다
@@ -100,34 +104,40 @@ description: "신규 결제/PG 서비스 출시(런칭)를 기획부터 구축 �
 
 이 하네스는 외부 도구·플러그인에 의존하지 않는다 — 문서 구조는 `docs/{kickoff,constraints,architecture,session-design,operations,specs,adr,reports}/` 표준 폴더만으로 자기완결적이며, `reporter`가 마지막에 쓰는 구축 보고서(`docs/reports/{service-slug}-플랫폼-구축-보고서.md`)가 전체 산출물의 단일 진입점(목차) 역할을 한다.
 
-### Phase 2: 팀 구성
+### Phase 2: 게이트 기록과 스폰 순서
 
-팀원 10명을 스폰하고(구체적 호출 방식은 툴 API에 좌우되므로 [부록 A](#부록-a--현행-claude-code-api-매핑-2026-08-기준) 참조), 아래 **게이트 5개**로 착수 순서를 강제한다. 게이트는 "어떤 산출물이 어떤 상태여야 다음 팀원이 시작해도 되는가"를 관측 가능한 조건으로 정의한 것이며, 이 조건 자체는 이를 강제하는 구체 툴(작업 목록·의존성 API 등)이 바뀌어도 변하지 않는다.
+1. `{service-root}/_launch-workspace/gates.md`를 만든다(서식은 `references/gate-ledger.md`). 이후 게이트를 판정하거나 팀원을 스폰하거나 완료 보고를 받을 때마다 한 줄씩 덧붙입니다
+2. `adr`과 `planner`를 한 메시지에서 스폰합니다. `adr`은 처음부터 on-call이고 `planner`는 첫 단계라 둘 다 게이트가 없어요
+3. 나머지 팀원은 아래 게이트가 열린 시점에 스폰한다. 스폰 프롬프트 맨 앞에는 `references/gate-ledger.md`의 팀 통신 머리말을 채워 넣습니다(호출 예시는 부록 A)
 
-| 게이트 | 착수 대상 | 착수 조건 |
-|--------|----------|----------|
-| G1 | compliance | `docs/kickoff/01-*.md` + `docs/constraints/01-{service-slug}-제약-분석.md` 두 파일이 모두 존재 |
-| **G2** | **architect** | **`docs/constraints/02-{service-slug}-규제-준수-체크리스트.md`가 존재하고 `## 법무 확인 필요 목록` 섹션을 포함** — 규제 심층 검토 없이 설계가 시작되는 경로를 막는 이 팀의 핵심 안전장치 |
-| G3 | infra ∥ session ∥ ops (팬아웃 3갈래) | QA 체크포인트 1(아키텍처 정합성)이 PASS 또는 강제 PASS로 완결(아래 "완결"의 정의 참조) |
-| G4 | spec | QA 체크포인트 3(세션설계 정합성)이 완결 |
-| G5 | reporter | QA 체크포인트 2(인프라)·4(운영)·5(스펙) 정합성이 모두 완결 |
+게이트는 "어떤 산출물이 어떤 상태여야 다음 팀원이 시작해도 되는가"를 관측 가능한 조건으로 정의한 것입니다. 이 조건 자체는 이를 강제하는 구체 도구가 바뀌어도 변하지 않아요. 리더는 근거 파일을 직접 Glob, Grep, Read로 확인한 뒤에만 게이트를 엽니다.
+
+| 게이트 | 착수 대상 | 착수 조건 | 열리면 리더가 할 일 |
+|--------|----------|----------|------------------|
+| G1 | compliance | `docs/kickoff/01-*.md` + `docs/constraints/01-{service-slug}-제약-분석.md` 두 파일이 모두 존재 | `compliance` 스폰. planner 완료 보고의 H급 제약과 확정 스코프를 프롬프트에 넣는다 |
+| **G2** | **architect** | **`docs/constraints/02-{service-slug}-규제-준수-체크리스트.md`가 존재하고 `## 법무 확인 필요 목록` 섹션을 포함** — 규제 심층 검토 없이 설계가 시작되는 경로를 막는 이 팀의 핵심 안전장치 | `architect` 스폰. compliance 완료 보고의 H급 규제 항목을 프롬프트에 넣는다 |
+| G3 | infra ∥ session ∥ ops (팬아웃 3갈래) | QA 체크포인트 1(아키텍처 정합성)이 PASS 또는 강제 PASS로 완결(아래 "완결"의 정의 참조) | 세 팀원을 한 메시지에서 스폰. architect 완료 보고의 확정 구조 요약을 넣는다 |
+| G4 | spec | QA 체크포인트 3(세션설계 정합성)이 완결 | `spec` 스폰 |
+| G5 | reporter | QA 체크포인트 2(인프라)·4(운영)·5(스펙) 정합성이 모두 완결 | `reporter` 스폰. `gates.md`와 `qa/` 경로를 넣는다 |
+
+**QA 체크포인트 요청**: 생산자(architect, infra, session, ops, spec)의 완료 보고를 받으면, 리더는 산출물 파일이 실제로 있는지 확인한 뒤 qa에게 그 체크포인트를 요청합니다. 체크포인트 1은 `qa` 스폰으로, 이후는 `SendMessage(to: "qa")`로 보내요. 요청에는 비교 대상 문서 경로와 기록 파일 경로만 넣고, 생산자의 작성 의도나 조사 메모는 넘기지 않는다. G3~G5는 qa의 `QA C{N}:` 보고를 받은 뒤 기록 파일 마지막 판정에 FIX, GAP, `보류(비교 상대 미완료)`가 남지 않았는지 리더가 직접 확인하고 엽니다.
 
 - `adr`과 `compliance`(2단계 이후)는 게이트가 없다 — 고정 작업을 받지 않고 팀원의 `SendMessage` 요청에만 응답하는 on-call 팀원이다.
-- `qa`는 5개 체크포인트 모두 "생산자 직후" 트리거되는 게이트 실행자다 — G3이 `architect` 완료가 아니라 `QA: 아키텍처 정합성 검증`의 완결에 걸리는 것에 주의(아키텍처 정합성이 확인되지 않은 채 infra·session·ops 3명이 각자 다른 전제로 병렬 작업을 시작하는 사고를 막는 장치).
-- **"완결"의 정의** — 최종 판정이 **PASS 또는 강제 PASS**로 끝나고(즉 FIX/GAP 판정 자체는 완결이 아니라 아래 재검증 루프의 중간 상태일 뿐이다), `qa-review` 스킬이 남기는 `보류(비교 상대 미완료)` 항목이 하나도 남지 않은 상태. FIX 판정에 따른 생산자 재작업→재검증 루프(종료 기준은 횟수 상한이 아니라 무진행(no-progress) 감지 — 지적 사유가 그 항목에 이전에 나온 적 없는 새 사유인 한 왕복 제한 없이 계속되고, 이미 한 번 나왔던 것과 동일한 지적이 다시 등장하면(직전 라운드가 아니어도 해당) 그 시점에 강제 PASS로 종료. 카운팅·판정 기준은 `qa-review` 스킬 참조)는 게이트 그래프에 나타나지 않는 별도의 SendMessage 왕복이며, 이 루프가 끝나야(PASS 또는 강제 PASS에 도달해야) 완결로 친다. 단, 대상 생산자가 영구 실패로 확정된 체크포인트는 "미수행(대상 부재)"으로 종결하고 완결로 간주한다(아래 에러 핸들링 표 참조).
-- **완결 후 전제 문서 변경 시 무효화(팀 실행 중)** — QA가 이미 PASS(강제 PASS 포함)로 완결 처리한 체크포인트라도 한 번 PASS를 영구 PASS로 취급하지 않는다. 팀이 실행 중인 상태에서 그 판정의 전제였던 문서가 사후에 정당하게 변경되면(예: spec의 역질의로 session 문서가 수정되는 경우 — `payment-session-designer.md` 참조, infra 문서가 계속 갱신되는 living document로 설계된 경우 — `payment-infra-builder.md` 참조, compliance가 on-call 응답 중 H급/M급 신규 판정으로 02번 문서를 갱신하는 경우 — `payment-compliance-analyst.md` 참조), 변경을 가한 팀원이 qa에게 SendMessage로 변경 사실을 알리고, qa는 해당 체크포인트를 무효화한 뒤 1회 한정으로 재수행한다(같은 문서가 다시 바뀌면 그때 다시 1회 — 무한 재수행은 아니되 변경 때마다 재수행은 보장). 이 재수행은 이전 완결 사이클의 무진행 판정 이력(최저 기록·항목 사유)과 분리된 새 이력 구간으로 취급한다 — 이어받으면 재수행에서 나온 정상적인 새 불일치까지 무진행으로 오판돼 조기 강제 PASS될 수 있다(구분 방식은 `qa-review`의 "판정 후 처리" 참조). **팀이 이미 해체된 뒤(Phase 5 이후) 문서가 갱신되는 경우는 이 경로를 쓸 수 없다 — 대신 Phase 0의 "부분 재실행 절차"(리더가 직접 `qa-review`를 단독 트리거)를 따른다.**
+- `qa`는 5개 체크포인트 모두 "생산자 직후" 트리거되는 게이트 실행자입니다. G3이 `architect` 완료가 아니라 QA 체크포인트 1의 완결에 걸린다는 점에 주의한다(아키텍처 정합성이 확인되지 않은 채 infra, session, ops 3명이 각자 다른 전제로 병렬 작업을 시작하는 사고를 막는 장치).
+- **"완결"의 정의** — 최종 판정이 **PASS 또는 강제 PASS**로 끝나고(즉 FIX/GAP 판정 자체는 완결이 아니라 아래 재검증 루프의 중간 상태일 뿐이다), `qa-review` 스킬이 남기는 `보류(비교 상대 미완료)` 항목이 하나도 남지 않은 상태. FIX 판정에 따른 생산자 재작업→재검증 루프(종료 기준은 횟수 상한이 아니라 무진행(no-progress) 감지 — 지적 사유가 그 항목에 이전에 나온 적 없는 새 사유인 한 왕복 제한 없이 계속되고, 이미 한 번 나왔던 것과 동일한 지적이 다시 등장하면(직전 라운드가 아니어도 해당) 그 시점에 강제 PASS로 종료. 카운팅·판정 기준은 `qa-review` 스킬 참조)는 게이트 기록에 나타나지 않는 qa와 생산자 사이의 SendMessage 왕복이며, 이 루프가 끝나야(PASS 또는 강제 PASS에 도달해야) 완결로 친다. 단, 대상 생산자가 영구 실패로 확정된 체크포인트는 "미수행(대상 부재)"으로 종결하고 완결로 간주한다(아래 에러 핸들링 표 참조).
+- **완결 후 전제 문서 변경 시 무효화(팀 실행 중)** — QA가 이미 PASS(강제 PASS 포함)로 완결 처리한 체크포인트라도 한 번 PASS를 영구 PASS로 취급하지 않는다. 팀이 실행 중인 상태에서 그 판정의 전제였던 문서가 사후에 정당하게 변경되면(예: spec의 역질의로 session 문서가 수정되는 경우 — `payment-session-designer.md` 참조, infra 문서가 계속 갱신되는 living document로 설계된 경우 — `payment-infra-builder.md` 참조, compliance가 on-call 응답 중 H급/M급 신규 판정으로 02번 문서를 갱신하는 경우 — `payment-compliance-analyst.md` 참조), 변경을 가한 팀원이 qa에게 SendMessage로 변경 사실을 알리고, qa는 해당 체크포인트를 무효화한 뒤 1회 한정으로 재수행한다(같은 문서가 다시 바뀌면 그때 다시 1회 — 무한 재수행은 아니되 변경 때마다 재수행은 보장). qa는 무효화 사실을 `QA C{N}: 무효화`로 리더에게 알립니다. 리더는 `gates.md`에 남기고, 그 체크포인트가 다시 완결될 때까지 거기에 걸린 아직 열지 않은 게이트를 열지 않는다(이미 스폰한 팀원은 멈추지 않는다). 이 재수행은 이전 완결 사이클의 무진행 판정 이력(최저 기록·항목 사유)과 분리된 새 이력 구간으로 취급한다 — 이어받으면 재수행에서 나온 정상적인 새 불일치까지 무진행으로 오판돼 조기 강제 PASS될 수 있다(구분 방식은 `qa-review`의 "판정 후 처리" 참조). **팀이 이미 해체된 뒤(Phase 5 이후) 문서가 갱신되는 경우는 이 경로를 쓸 수 없다 — 대신 Phase 0의 "부분 재실행 절차"(리더가 직접 `qa-review`를 단독 트리거)를 따른다.**
 - **게이트 위반 감지 시** — 하류 팀원이 게이트 미충족 상태로(예: architect가 G2 충족 전에) 이미 작업을 시작한 것이 확인되면, 그 산출물을 폐기하지 않는다. "게이트 미충족 상태로 작성됨" 표기를 남기고, 게이트가 충족되는 즉시 그 팀원에게 재작업을 지시한다.
 
-### Phase 3: 실행 (팀원 자체 조율)
+### Phase 3: 실행 (리더가 게이트를 열고 팀원끼리 조율)
 
-**실행 방식:** 팀원들이 공유 작업 목록에서 게이트가 해소된 작업을 스스로 claim해 진행. 리더는 모니터링하며 병목이 생기면 개입.
+**실행 방식:** 리더는 완료 보고를 받을 때마다 게이트를 판정하고, 열린 게이트의 팀원을 스폰합니다(Phase 2 표). 팀원끼리는 이름으로 `SendMessage`를 주고받아요. 아직 스폰되지 않은 팀원에게 갈 내용은 리더에게 보내는 완료 보고에 담고, 리더가 다음 스폰 프롬프트에 넣는다. 메시지 첫 줄 형식은 `references/gate-ledger.md`의 머리말을 따른다.
 
 **팀원 간 통신 규칙 (에이전트 정의 파일에 상술됨):**
-- planner → compliance: H급 제약·확정 스코프 전달 (규제 심층 검토의 입력)
-- compliance → architect: 규제 심층 검토 완료 시 H급 규제 항목 전달 (H급 규제 없이 설계 시작하지 않도록)
+- planner → 리더 → compliance: H급 제약과 확정 스코프를 planner 완료 보고에 담고, 리더가 G1 확인 뒤 compliance 스폰 프롬프트에 넣는다(규제 심층 검토의 입력)
+- compliance → 리더 → architect: H급 규제 항목을 compliance 완료 보고에 담고, 리더가 G2 확인 뒤 architect 스폰 프롬프트에 넣는다(H급 규제 없이 설계 시작하지 않도록)
 - architect ⇄ 리더 ⇄ 사용자: 하류 구조가 갈리는 축이 있으면 확정 전 옵션을 제시하고 선택받는다(UC2, G3보다 먼저 종료). REDO 에스컬레이션과 달리 리더는 판단하지 않고 중계만 한다 — 왕복 종료 + 확정 산출물 작성 후에만 아래 팬아웃이 이뤄진다
-- architect → infra, session, ops: 컴포넌트 구조(확정본) 동시 전달 (팬아웃, 3갈래)
-- session ↔ spec: 시나리오별 확정 필드 전달, spec이 세션 설계에 없는 API가 필요하면 session에게 역으로 확인 질의
+- architect → 리더 → qa, infra, session, ops: architect 완료 보고(확정본)를 받으면 리더가 qa에게 체크포인트 1을 요청하고, G3이 열리면 세 팀원을 한 메시지에서 스폰한다(팬아웃, 3갈래)
+- spec → session: spec은 G4 뒤에 스폰되어 session 문서를 직접 Read하고, 세션 설계에 없는 API가 필요하면 session에게 역으로 확인 질의한다
 - session ↔ ops: 타임아웃/임계값 정합성 상호 확인 — **정본(source of truth)은 session 문서**. 값이 다르면 ops가 session 문서 값에 맞춘다. 왕복에 고정 상한은 없지만 3회 왕복 후에도 못 맞추면 어느 한쪽만 계속 고치는 상태를 정상 흐름으로 넘기지 않고 리더에게 SendMessage로 에스컬레이션한다
 - infra ↔ ops: 서버 존 구성과 운영 전환 로드맵(배포·모니터링 대상)이 어긋나지 않도록 상호 확인 — **정본은 infra 문서**. 값이 다르면 ops가 infra 문서 값에 맞춘다. 왕복 상한·에스컬레이션 규칙은 session ↔ ops와 동일
 - qa → architect·infra·session·ops·spec: FIX/GAP 판정 시 구체적 위치·불일치 내용 전달, 수정 완료 알림 수신 즉시 재검증 (종료 기준은 무진행 감지 — 그 항목에 이전에 나온 적 없는 새 사유인 한(직전 라운드가 아니라 그 항목의 전체 이력 기준) 왕복 제한 없이 반복, 카운팅·판정 기준은 `qa-review` 스킬 참조)
@@ -135,16 +145,16 @@ description: "신규 결제/PG 서비스 출시(런칭)를 기획부터 구축 �
 - qa → 리더: REDO급(전면 재설계 필요) 불일치 발견 시 판정 없이 즉시 에스컬레이션
 - 전 팀원 → adr: 되돌리기 어려운 결정 발생 시 기록 요청
 - 전 팀원 → compliance: 규제 관련 질의 발생 시 SendMessage로 문의 (adr과 동일한 on-call 패턴)
-- 산출물이 있는 7명(planner·compliance·architect·infra·session·ops·spec) → reporter: 각자 완료 알림 시 "ADR 필요 여부 검토함(불필요 / adr에게 요청함 — adr-{번호})" 한 줄을 반드시 포함한다 — on-call 팀원(adr)은 고정 태스크가 없어 TaskList로 참여 여부가 보이지 않으므로, 생산자 쪽에서 검토했다는 사실 자체를 남겨야 리더가 "결정을 놓친 것"과 "애초에 결정이 없었던 것"을 구분할 수 있다 (adr은 on-call이라 완료 알림 없음 — 요청 시 회신)
-- qa → reporter: 각 체크포인트 판정 결과(강제 PASS 포함) 요약 전달 — 리스크 레지스터의 "QA 확인 필요" 항목 근거
+- 산출물이 있는 7명(planner, compliance, architect, infra, session, ops, spec) → 리더 → reporter: 완료 보고 첫 줄에 `ADR 검토: 불필요 또는 adr-{번호}`를 반드시 넣는다. 리더는 이 값을 `gates.md`의 완료 보고 표에 옮기고, reporter는 G5 뒤에 스폰되어 그 표를 읽는다. on-call 팀원(adr)은 고정 작업이 없어 게이트 기록에 참여 흔적이 남지 않으므로, 생산자 쪽에서 검토했다는 사실 자체를 남겨야 리더가 "결정을 놓친 것"과 "애초에 결정이 없었던 것"을 구분할 수 있다(adr은 완료 보고 없이 요청 시 회신)
+- qa → 리더: 체크포인트가 완결(강제 PASS, 미수행 포함)되거나 무효화되면 `QA C{N}:` 줄로 보고한다. 리더는 이 보고와 기록 파일로 G3~G5를 판정하고, reporter는 `qa/` 기록을 직접 Read해 리스크 레지스터의 "QA 확인 필요" 항목 근거로 쓴다
 - reporter → adr: ADR 전체 목록을 SendMessage로 요청 (보고서 **초안** 작성 착수 시점 — UC3·확정보다 먼저이며, Phase 4의 "착수 전제"가 가리키는 확정 이후 시점과는 다르다) — adr → reporter: 목록 전달
 - reporter → compliance: "법무 확인 필요 목록"(H급 규제 항목 포함)을 SendMessage로 요청
 - reporter ⇄ 리더 ⇄ 사용자: 보고서 초안 완성 후 핵심 결정 몇 개를 되물어 이해도를 확인한다(UC3, G5와 무관한 reporter 내부 절차). 리더는 판단하지 않고 중계만 한다 — 왕복이 끝나야 보고서가 확정되고, 그 이후에 Phase 4 리더 교차 확인이 시작된다
 
 **리더 모니터링:**
-- 팀원이 유휴 상태가 되면 자동 알림 수신 → 다음 작업이 의존성 대기 중인지, 막힌 것인지 확인
-- 각 팀원의 진행 상태를 확인한다(방법은 부록 A "3) 진행률 확인·종료" 참조). 특정 팀원이 30분 이상 진행 없이 막히면 `SendMessage`로 상태 확인
-- **on-call 팀원은 고정 작업이 없어진 이후(`adr`은 처음부터, `compliance`는 t2〈규제 준수 심층 검토〉완료 이후) 위 TaskList 기반 유휴 감지가 적용되지 않는다** — `compliance`가 t2를 수행하는 구간(G1 이후~G2 이전)은 일반 팀원과 동일하게 TaskList 기반 유휴 감지(30분 이상 진행 없으면 SendMessage로 상태 확인)가 그대로 적용된다는 점에 주의한다 — G2는 "핵심 안전장치"(위 게이트 표 참조)이므로 이 구간의 정체를 놓치면 안 된다. 고정 작업이 없어진 뒤에는, 이 둘에게 요청을 보낸 팀원은 자신의 작업(TaskList상 아직 `completed`가 아닌 상태)이 그대로 막혀 있으므로, 위 "30분 이상 진행 없이 막히면 SendMessage로 상태 확인" 절차로 리더가 이미 감지한다. 리더는 그 팀원이 `adr`·`compliance` 응답을 기다리는 중임을 확인하면, 요청을 대신 전달하지 않고 `adr`·`compliance`에게 직접 SendMessage로 생존 확인을 한다. 무응답이면 "팀원 1명 실패/중지"(아래 에러 핸들링 표)와 동일하게 처리한다
+- 팀원이 턴을 끝내면 자동 알림이 옵니다. 리더는 그 팀원이 보낸 첫 줄(`완료:` 또는 `대기:`)로 게이트를 판정할 때인지, 누군가의 회신을 기다리는 중인지 가른다
+- 각 팀원의 진행 상태를 확인한다(방법은 부록 A "3) 진행 확인과 종료" 참조). `gates.md`에 스폰은 있는데 완료 보고가 없는 팀원이 30분 이상 진행 없이 막히면 `SendMessage`로 상태 확인
+- **on-call 팀원은 고정 작업이 없어진 이후(`adr`은 처음부터, `compliance`는 규제 준수 심층 검토 완료 이후) `gates.md`로는 정체가 보이지 않습니다.** 심층 검토 중인 `compliance`(G1 이후 G2 이전)는 일반 팀원과 같은 감지 대상이에요. G2가 핵심 안전장치(위 게이트 표 참조)라 이 구간의 정체를 놓치면 안 된다. 그 뒤로는 on-call 팀원에게 요청한 팀원이 `대기: {이름} | 상대: adr`(또는 `compliance`) 줄을 보내므로, 리더는 그 대기가 30분을 넘으면 요청을 대신 전달하지 않고 on-call 팀원에게 직접 SendMessage로 생존 확인을 한다. 무응답이면 "팀원 1명 실패/중지"(아래 에러 핸들링 표)와 같게 처리합니다
 - **UC(사용자 확인 왕복) 대기 상태로 표시된 팀원은 위 유휴 감지·상태 확인·재시작 대상에서 제외한다** — 판별 근거는 `user-checkpoints/`의 상태 파일("사용자 응답 대기 중")이지 리더의 기억이 아니다(리더 컨텍스트가 끊겨도 파일로 복원 가능). 사용자가 응답하지 않고 다른 지시를 하면 아래 에러 핸들링 표의 절차를 따른다
 - **planner 완료 시(UC1 반영·노트 갭 분석 확인)**: Phase 0.5(UC1)를 수행했으면, 리더가 planner 산출물을 1회 Read해 UC1 응답 항목이 실제로 반영됐는지 확인한다(Phase 4 리더 교차확인과 같은 저비용 패턴) — 노트가 입력으로 제공됐으면 같은 Read에서 `## 노트 반영 현황` 갭 분석 표가 포함됐는지도 함께 확인한다 — 누락 발견 시 planner에게 SendMessage로 보완 요청
 
@@ -172,13 +182,13 @@ description: "신규 결제/PG 서비스 출시(런칭)를 기획부터 구축 �
 1. `reporter` 작업(`구축 보고서 종합`, UC3까지 끝난 확정본) 완료 대기
 2. 리더가 `docs/reports/{service-slug}-플랫폼-구축-보고서.md`를 Read하여 리스크 레지스터에 각 팀원의 미결 항목이 실제로 반영됐는지 교차 확인
 3. `{service-root}/_launch-workspace/qa/`의 5개 체크포인트 기록을 Read하여 강제 PASS(항목 단위 무진행 판정, 또는 체크포인트 전체 무진행 판정으로 인한 일괄 처리) 항목이 리스크 레지스터에 빠짐없이 반영됐는지 확인
-4. 7명의 완료 알림에 포함된 "ADR 필요 여부 검토함" 기록을 훑어 "불필요" 판단들이 실제로 타당한지(예: 이중화 여부·동기/비동기 처리 방식처럼 되돌리기 어려운 결정을 "불필요"로 넘긴 경우는 없는지) 훑어보고, 의심스러우면 해당 팀원에게 SendMessage로 재확인
+4. `gates.md` 완료 보고 표에 모인 7명의 `ADR 검토` 값을 훑어 "불필요" 판단들이 실제로 타당한지(예: 이중화 여부·동기/비동기 처리 방식처럼 되돌리기 어려운 결정을 "불필요"로 넘긴 경우는 없는지) 훑어보고, 의심스러우면 해당 팀원에게 SendMessage로 재확인
 5. 누락 발견 시 reporter에게 SendMessage로 보완 요청 (1회) — UC3의 "핵심 결정 해설" 보강과는 별개 절차다(UC3는 확정 전에 이미 끝난 상태이므로, 이 5번의 보완 요청은 UC3 이후에 새로 발견된 누락만 대상으로 한다)
 
 ### Phase 5: 정리
 
-1. 팀원 전원에게 종료 알림 (SendMessage)
-2. 팀 종료 — 남은 작업이 있으면 전부 완료 처리하고(부록 A 참조), 팀 자체를 닫는 전용 수단이 없으면 종료 통지로 갈음한다
+1. 끝난 팀원에게는 종료 알림을 보내지 않는다. SendMessage를 받으면 깨어나 맥락을 다시 읽느라 토큰을 쓰기 때문이에요. 아직 실행 중인 팀원이 있으면(부록 A "3) 진행 확인과 종료") `TaskStop`으로 멈춘다
+2. `gates.md`에 `종료` 줄을 남긴다. 팀을 닫는 별도 절차는 없습니다
 3. `{service-root}/_launch-workspace/` 보존 (사후 감사용, 삭제하지 않음)
 4. 사용자에게 결과 요약: 생성된 문서 목록, 미결 항목 개수, ADR 개수. **미결 항목 개수는 뭉뚱그리지 않는다** — "강제 PASS로 종결된 항목 수"(qa 재검증에서 무진행으로 판정된 것, 리스크 레지스터 최상단 H급 취급 대상)를 그 외의 경미한 (미결)·(미확인)·(미확보) 표기 개수와 분리해서 보고한다. "PASS"라는 단어와 달리 강제 PASS는 검증 실패를 무한루프 방지를 위해 통과 처리한 것이므로, 사용자가 문서를 직접 뒤지지 않고도 이 항목의 존재를 바로 알 수 있어야 한다
 
@@ -187,26 +197,26 @@ description: "신규 결제/PG 서비스 출시(런칭)를 기획부터 구축 �
 ```
 [리더] ⇄ [사용자] (UC1: 역인터뷰 — 초기·새 실행만)
                 │
-        [리더] → 팀원 10명 스폰 + 게이트 G1~G5 설정
+        [리더] gates.md 생성 → adr, planner 스폰
                 │
-        planner ──SendMessage→ compliance ──SendMessage→ architect
-                  │                  ↑
-                  │                  └──(전 팀원, 규제 질의 시 on-call)──┘
+        planner ─완료→ [리더: G1] ─스폰→ compliance ─완료→ [리더: G2] ─스폰→ architect
+                                           ↑
+                                           └──(전 팀원, 규제 질의 시 on-call)
                   │
-              architect ⇄ [리더] ⇄ [사용자] (UC2: 아키텍처 옵션 제시 — G3 이전)
+              architect ⇄ [리더] ⇄ [사용자] (UC2: 아키텍처 옵션 제시, G3 이전)
                   │
-              architect → [QA: 아키텍처 정합성]
+              architect ─완료→ [리더] ─스폰→ qa: [QA C1 아키텍처] ─완결→ [리더: G3]
                   │
-                  ├─SendMessage→ infra   → [QA: 인프라]
-                  ├─SendMessage→ session → [QA: 세션]  ──→ spec → [QA: 스펙]
-                  └─SendMessage→ ops    → [QA: 운영]
-                  (infra ↔ ops · session ↔ ops 정합성 상호 확인)
+                  ├─스폰→ infra   ─완료→ [리더] → [QA C2 인프라]
+                  ├─스폰→ session ─완료→ [리더] → [QA C3 세션] ─완결→ [리더: G4] ─스폰→ spec ─완료→ [리더] → [QA C5 스펙]
+                  └─스폰→ ops     ─완료→ [리더] → [QA C4 운영]
+                  (infra ↔ ops, session ↔ ops 정합성 상호 확인)
                   │
         (전 팀원) ──SendMessage(결정 발생시)→ adr
         (전 팀원) ──SendMessage(규제 질의시)→ compliance
         (QA가 FIX 판정) ──SendMessage(구체적 불일치)→ 해당 생산자 (재검증 루프, 무진행 감지까지 반복)
                   │
-        [QA: 인프라] + [QA: 운영] + [QA: 스펙] 완료 ──SendMessage→ reporter
+        [QA C2] + [QA C4] + [QA C5] 완결 ─→ [리더: G5] ─스폰→ reporter
                                         │
                                   구축 보고서 종합(초안)
                                         │
@@ -221,16 +231,18 @@ description: "신규 결제/PG 서비스 출시(런칭)를 기획부터 구축 �
 
 | 상황 | 전략 |
 |------|------|
-| 팀원 1명 실패/중지 | 리더가 감지 → SendMessage로 상태 확인 → 재시작. 재실패 시(영구 실패 확정) 해당 산출물 없이 하류 작업 진행, reporter에게 누락 명시 지시. 그 생산자를 비교 대상으로 삼는 QA 체크포인트는 "미수행(대상 부재)"으로 종결 처리하고 완결로 간주해 G5를 비롯한 하류 게이트 산정에서 제외한다 — 비교 상대가 영구히 나타나지 않아 "보류(비교 상대 미완료)" 항목이 영구히 안 풀리는 상태를 막는다 |
-| on-call 팀원(`adr`·`compliance`)에게 SendMessage로 요청했으나 30분 내 회신 없음 | 요청한 팀원의 작업이 그대로 막혀 있으므로 위 "팀원 1명 실패/중지" 감지로 리더가 발견 → 원인이 `adr`·`compliance` 무응답임을 확인하면(`adr`은 처음부터, `compliance`는 t2 완료 이후부터 고정 작업이 없어 TaskList로는 생사를 직접 감지할 수 없다 — t2 수행 중 정체는 일반 유휴 감지로 이미 커버된다), 리더가 해당 on-call 팀원에게 직접 생존 확인 SendMessage. 응답 있으면 정상 처리. 응답 없으면 재시작 시도 → 재실패 시 `adr` 요청이면 해당 결정을 ADR 없이 리스크 레지스터에 미결 항목으로 남기고, `compliance` 요청이면 "법무 확인 필요(compliance 무응답)"로 표기 후 계속 진행 |
-| architect가 H급 제약·H급 규제 항목 없이 시작(planner·compliance 지연) | 리더가 개입해 architect를 대기시키고 planner·compliance 상태 확인 (게이트 G2가 정상 작동하면 원천적으로 발생하지 않아야 함 — 발생 시 게이트 설정 오류 의심) |
+| 팀원 1명 실패/중지 | 리더가 감지 → SendMessage로 상태 확인 → 재시작(방법은 부록 A "3) 진행 확인과 종료"). 재실패 시(영구 실패 확정, `gates.md`에 `실패` 줄) 해당 산출물 없이 하류 작업 진행, reporter 스폰 프롬프트에 누락을 명시. 그 생산자를 비교 대상으로 삼는 QA 체크포인트는 "미수행(대상 부재)"으로 종결 처리하고 완결로 간주해 G5를 비롯한 하류 게이트 산정에서 제외한다 — 비교 상대가 영구히 나타나지 않아 "보류(비교 상대 미완료)" 항목이 영구히 안 풀리는 상태를 막는다 |
+| on-call 팀원(`adr`·`compliance`)에게 SendMessage로 요청했으나 30분 내 회신 없음 | 요청한 팀원의 작업이 그대로 막혀 있으므로 위 "팀원 1명 실패/중지" 감지로 리더가 발견 → 원인이 `adr`, `compliance` 무응답임을 확인하면(요청한 팀원의 `대기:` 줄에 상대가 적혀 있다. on-call 팀원은 고정 작업이 없어 `gates.md`로는 생사가 보이지 않고, 심층 검토 중인 compliance의 정체는 일반 유휴 감지로 이미 잡힌다), 리더가 해당 on-call 팀원에게 직접 생존 확인 SendMessage. 응답 있으면 정상 처리. 응답 없으면 재시작 시도 → 재실패 시 `adr` 요청이면 해당 결정을 ADR 없이 리스크 레지스터에 미결 항목으로 남기고, `compliance` 요청이면 "법무 확인 필요(compliance 무응답)"로 표기 후 계속 진행 |
+| architect가 H급 제약·H급 규제 항목 없이 시작(planner·compliance 지연) | 리더가 개입해 architect를 대기시키고 planner, compliance 상태 확인. 리더가 G2를 확인하기 전에 architect를 스폰했을 때만 생기므로, `gates.md`의 G2 줄과 architect 스폰 줄의 순서를 대조한다 |
 | infra/session/ops 중 일부만 지연 | 나머지는 계속 진행, spec은 session의 QA 통과만으로 시작 가능(infra·ops의 QA는 spec의 하드 의존성 아님). 단 reporter는 infra·ops·spec 3개 QA 모두 완료돼야 시작 |
-| qa가 같은 항목(필드/컴포넌트)에서 그 항목의 재검증 이력 중 이미 나온 적 있는 동일한 위치·동일 사유를 다시 확인(직전 라운드가 아니어도 해당 — 항목 단위 무진행), 또는 체크포인트 전체의 남은 불일치 항목 수가 2라운드 연속 지금까지의 최저 기록을 갱신하지 못함(체크포인트 단위 무진행) | 강제 PASS 처리(전자는 해당 항목만, 후자는 그 시점까지 남은 불일치 전부 일괄) + 생산자에게 SendMessage로 해당 문서에 "미결 항목(QA 확인 필요)" 섹션 추가를 요청(qa 자신은 docs/에 쓰지 않는다) + reporter에게 SendMessage 통지. 그 항목에 이전에 나온 적 없는 새 사유인 한(직전 라운드가 아니라 그 항목의 전체 이력 기준 — 진행이 있는 한) 왕복 횟수 제한 없이 재검증을 계속하며, 리더가 임의로 추가 재시도를 지시하거나 무진행 상태에서 재시도를 강행하지 않는다(무한 루프 방지가 우선) |
+| qa가 같은 항목(필드/컴포넌트)에서 그 항목의 재검증 이력 중 이미 나온 적 있는 동일한 위치·동일 사유를 다시 확인(직전 라운드가 아니어도 해당 — 항목 단위 무진행), 또는 체크포인트 전체의 남은 불일치 항목 수가 2라운드 연속 지금까지의 최저 기록을 갱신하지 못함(체크포인트 단위 무진행) | 강제 PASS 처리(전자는 해당 항목만, 후자는 그 시점까지 남은 불일치 전부 일괄) + 생산자에게 SendMessage로 해당 문서에 "미결 항목(QA 확인 필요)" 섹션 추가를 요청(qa 자신은 docs/에 쓰지 않는다) + 기록 파일에 강제 PASS로 남긴다(reporter는 G5 뒤에 그 기록을 읽는다). 그 항목에 이전에 나온 적 없는 새 사유인 한(직전 라운드가 아니라 그 항목의 전체 이력 기준 — 진행이 있는 한) 왕복 횟수 제한 없이 재검증을 계속하며, 리더가 임의로 추가 재시도를 지시하거나 무진행 상태에서 재시도를 강행하지 않는다(무한 루프 방지가 우선) |
 | qa가 REDO급(전면 재설계 필요) 불일치를 발견 | qa는 판정하지 않고 즉시 리더에게 에스컬레이션 → 리더가 영향 범위(팬아웃 3갈래 전체 재작업 여부 등) 판단 후 해당 팀원(들)에게 직접 지시 |
 | adr에 결정 기록 폭주(팀원 다수가 동시 요청) | adr이 순차 처리, 리더는 개입하지 않음 (병목이 아니라 정상 동작) |
 | 외부 연동 스펙 전반 미확보 | 전체를 막지 않고 "미확보" 표기로 진행 — 스펙 확보는 이 하네스 범위 밖(사용자가 별도로 확보) |
 | 팀원 과반 실패 | 사용자에게 알리고 진행 여부 확인 |
-| 팀원이 자신의 게이트가 영구히 충족 불가능하다고 판단(예: 선행 작업·태스크가 사라졌거나 응답이 없음) | **스스로 우회해 착수하지 않는다** — 즉시 리더에게 SendMessage로 에스컬레이션하고, 리더가 상태를 확인해 재개를 지시할 때까지 대기를 유지한다. "대기가 곧 교착"이라는 판단으로 게이트를 임의로 건너뛰는 것은 금지 — 리더가 확인하기 전까지 게이트 미충족과 게이트 소실을 팀원 스스로 구분할 수 없기 때문이다 |
+| 스폰된 팀원이 프롬프트의 게이트 근거 파일을 찾지 못하거나, 근거가 게이트 조건과 다르다고 판단 | **스스로 우회해 착수하지 않는다.** `대기:` 줄로 리더에게 보고하고, 리더가 `gates.md`와 근거 파일을 다시 확인해 지시할 때까지 기다린다. 리더가 확인하기 전까지는 근거 누락과 리더의 조기 스폰을 팀원 스스로 구분할 수 없기 때문이에요 |
+| 리더 컨텍스트가 끊김(압축, 세션 재시작) | `gates.md`, `qa/`, `user-checkpoints/`를 Read해 마지막 줄부터 이어간다. 이미 스폰된 이름은 다시 스폰하지 않습니다. 같은 이름으로 새로 띄우면 이후 메시지가 새 에이전트로 가서 앞선 맥락과 끊겨요. 살아 있는지는 `ListAgents`로 확인한다 |
+| `SendMessage`가 상대 없음으로 실패 | 보내려던 내용을 리더(main)에게 보낸다. 리더는 상대를 스폰할 때 프롬프트로 넘긴다. 정상 흐름에서는 생기지 않으므로, 리더는 그 상대가 언제 스폰돼야 했는지 `gates.md`로 확인한다 |
 | 사용자가 UC(사용자 확인 왕복) 질문에 응답하지 않고 다른 지시를 함 | 리더가 1회 리마인드 후 해당 UC의 무응답 기본값을 적용하고, 그 사실을 산출물과 Phase 5 결과 요약에 표기한다. UC는 게이트가 아니므로 이 대기는 파이프라인을 막지 않는다 |
 
 ## 테스트 시나리오
@@ -240,9 +252,9 @@ description: "신규 결제/PG 서비스 출시(런칭)를 기획부터 구축 �
 2. Phase 0: `{xyz-pay 서비스의 문서 루트}/docs/` 미존재 → 초기 실행
 3. Phase 0.5(UC1): 질문 은행에서 "결제수단 범위"·"정산 주기와 해외 정산 포함 여부" 2개만 선별(나머지는 최초 입력에 이미 답이 있어 제외) → 사용자 응답
 4. Phase 1: 사용자 입력 + UC1 응답 정리 후 `_launch-workspace/00_input/개요.md`에 저장(외부 도구 호출 없음)
-5. Phase 2: 10명 팀 구성, 13개 작업 등록(생산 8 + QA 5)
-6. Phase 3: planner 완료(리더가 UC1 반영 여부 확인) → compliance 규제 심층 검토 시작 → compliance 완료(H급 규제 항목을 architect에 SendMessage) → architect가 컴포넌트 경계 축 하나(상태 전이 세분화 vs 도메인 단위 묶기)로 옵션 2개를 리더 경유로 제시(UC2) → 사용자가 ★추천안 선택 → architect가 확정 산출물 작성 완료 → qa가 "QA: 아키텍처 정합성 검증" 수행, PASS → infra/session/ops 3갈래 병렬 시작 → 각각 완료 시마다 qa가 해당 체크포인트 검증 → session의 QA가 FIX 판정(예: "해외카드 시나리오가 architect의 미결 항목과 모순") → qa가 session에게 SendMessage로 구체적 위치 지적 → session 수정 → qa 재검증 PASS → spec 시작 → qa가 스펙 검증 → 중간에 infra가 "이중화 여부"를 adr에게 기록 요청, session이 해외 결제수단 관련 규제 질의를 compliance에게 SendMessage로 문의
-7. Phase 4: infra·ops·spec 3개 QA 완료 확인 후 reporter가 구축 보고서 완성, 리더가 리스크 레지스터 교차 확인(QA 강제 PASS 항목 포함 여부까지)
+5. Phase 2: `gates.md` 생성, adr과 planner를 한 메시지에서 스폰
+6. Phase 3: planner 완료 보고(리더가 UC1 반영 여부 확인) → 리더가 G1 확인 후 compliance 스폰 → compliance 완료 보고 → 리더가 G2 확인 후 architect 스폰(H급 규제 항목 전달) → architect가 컴포넌트 경계 축 하나(상태 전이 세분화 vs 도메인 단위 묶기)로 옵션 2개를 리더 경유로 제시(UC2) → 사용자가 ★추천안 선택 → architect가 확정 산출물 작성 후 완료 보고 → 리더가 qa 스폰(체크포인트 1), PASS → 리더가 G3 확인 후 infra, session, ops를 한 메시지에서 스폰 → 각각 완료 보고 때마다 리더가 qa에게 해당 체크포인트 요청 → session의 QA가 FIX 판정(예: "해외카드 시나리오가 architect의 미결 항목과 모순") → qa가 session에게 SendMessage로 구체적 위치 지적 → session 수정 → qa 재검증 PASS, 리더에게 `QA C3: PASS` → 리더가 G4 확인 후 spec 스폰 → qa가 스펙 검증 → 중간에 infra가 "이중화 여부"를 adr에게 기록 요청, session이 해외 결제수단 관련 규제 질의를 compliance에게 SendMessage로 문의
+7. Phase 4: 리더가 G5(C2, C4, C5 완결) 확인 후 reporter 스폰 → reporter가 구축 보고서 완성, 리더가 리스크 레지스터 교차 확인(QA 강제 PASS 항목 포함 여부까지)
 8. Phase 5: 팀 정리, 사용자에게 결과 요약
 9. 예상 결과: `{xyz-pay 서비스의 문서 루트}/docs/{kickoff,constraints,architecture,session-design,operations,specs,adr,reports}/` 전체 생성
 
@@ -255,6 +267,13 @@ description: "신규 결제/PG 서비스 출시(런칭)를 기획부터 구축 �
 6. 리더가 planner 완료 시 `## 노트 반영 현황` 표 존재를 확인(위 "리더 모니터링" 참조) → 이후 흐름은 "정상 흐름" 5~8과 동일
 7. 예상 결과: 킥오프 문서에 노트 커버리지가 필드 단위로 드러나, 사용자가 노트에 빠뜨린 부분을 문서를 정독하지 않고도 파악 가능
 
+### 게이트 순서 확인 (작업 목록 도구가 없는 세션)
+1. 짧은 가상 서비스로 초기 실행을 돌리고, `{service-root}`는 버려도 되는 임시 폴더로 정한다
+2. 실행 뒤 `gates.md`의 `게이트와 스폰` 표를 위에서부터 읽는다. 스폰 순서가 `adr, planner` → G1 `compliance` → G2 `architect` → C1 `qa` → G3 `infra, session, ops` → G4 `spec` → G5 `reporter`이고, 각 G 줄이 그 게이트로 스폰한 줄보다 앞에 있어야 한다
+3. 각 G 줄의 근거 파일이 실제로 있고, 그 파일의 수정 시각이 다음 스폰 줄의 시각보다 이른지 확인한다. G3, G4, G5 근거인 `qa/{NN}-*.md`의 마지막 판정에 FIX, GAP, 보류가 없어야 한다
+4. 하류 산출물(`docs/architecture/01-*.md` 등)의 생성 시각이 그 팀원을 연 G 줄보다 늦어야 한다. 앞서 있으면 게이트 위반이다
+5. 세션 도구 목록에 작업 목록 도구가 없어도 1~4가 성립하면 통과다
+
 ### 에러 흐름 1 — 산출물 미확보
 1. Phase 3에서 spec이 외부 카드사 연동 스펙 미확보로 절반만 완료
 2. spec이 "미확보" 표기 후 작업 완료로 보고 (전체 실패가 아님 — 부분 완료도 유효)
@@ -266,14 +285,14 @@ description: "신규 결제/PG 서비스 출시(런칭)를 기획부터 구축 �
 1. Phase 3에서 qa가 "QA: 운영전략 정합성 검증"에서 ops 문서의 타임아웃 값이 session 문서와 다름을 발견 → FIX 판정("타임아웃 관련 설정" 항목, 사유: "타임아웃 값 30초 vs 45초 불일치"), ops에게 SendMessage. 라운드 1로 `{service-root}/_launch-workspace/qa/04-운영전략.md`에 append(이 시점 남은 불일치 항목 수: 1)
 2. ops가 45초로 수정 후 완료 알림 → qa 재검증 → 타임아웃 값은 맞았지만 같은 항목("타임아웃 관련 설정") 안에서 이 항목에 처음 나온 다른 사유로 여전히 불일치("재시도 횟수 필드가 새로 어긋남") → 지적 사유가 이 항목에 처음 나온 것이므로 진행이 있다고 보고 FIX 2번째 판정, 왕복 계속(횟수 제한 없음). 라운드 2로 같은 파일에 append(남은 항목 수: 1 — 최저 기록 갱신 없음, 1회차)
 3. ops가 재시도 횟수 필드를 고치는 과정에서 실수로 타임아웃 값을 30초로 되돌림 → qa 재검증 → **재시도 횟수 필드는 이제 일치함을 확인**했으나, 사유는 "타임아웃 값 30초 vs 45초 불일치"로 **직전 라운드(2번째)와는 다르지만 그 항목의 라운드 1 기록과 동일** → 라운드를 오가며 반복되는 오실레이션으로 항목 단위 무진행 판정(직전 라운드만 비교했다면 "새로운 지적"으로 오판정해 왕복이 끝없이 이어질 수 있었던 지점). 라운드 3으로 같은 파일에 append(남은 항목 수: 1 — 2라운드 연속 미갱신이라 체크포인트 단위로도 동시에 무진행 성립하지만, 이 항목 자체가 오실레이션으로 이미 무진행이므로 항목 단위 규칙으로 판정)
-4. qa는 더 재시도하지 않고 그 항목을 강제 PASS 처리 + ops에게 SendMessage로 "미결 항목(QA 확인 필요) — 타임아웃 값이 session과 반복적으로 어긋남(오실레이션), 수동 확인 필요" 섹션을 문서에 추가하도록 요청(qa 자신은 docs/에 쓰지 않는다) + reporter에게 SendMessage 통지
-5. reporter가 이 항목을 리스크 레지스터 최상단(H급 취급)에 반영
+4. qa는 더 재시도하지 않고 그 항목을 강제 PASS 처리 + ops에게 SendMessage로 "미결 항목(QA 확인 필요) — 타임아웃 값이 session과 반복적으로 어긋남(오실레이션), 수동 확인 필요" 섹션을 문서에 추가하도록 요청(qa 자신은 docs/에 쓰지 않는다) + 기록 파일에 강제 PASS로 남기고 리더에게 `QA C4: 강제 PASS | 기록: {경로}` 보고
+5. G5 뒤에 스폰된 reporter가 `qa/04-운영전략.md`를 읽고 이 항목을 리스크 레지스터 최상단(H급 취급)에 반영
 
 ### 에러 흐름 3 — UC2 옵션 선택 무응답
 1. architect가 컴포넌트 경계 축(상태 전이 세분화 vs 도메인 단위 묶기)으로 옵션 2개(★추천: 상태 전이 세분화)를 리더에게 SendMessage → 리더가 `_launch-workspace/user-checkpoints/UC2-아키텍처-옵션.md`에 기록 후 사용자에게 제시
 2. 사용자가 응답 없이 다른 주제로 대화를 이어감 → 리더가 1회 리마인드
 3. 리마인드 후에도 무응답 → 리더가 ★추천안(상태 전이 세분화) 자동 채택을 architect에게 회신 + "UC2 옵션 미선택 — 추천안 자동 채택" 사실을 상태 파일에 기록
-4. architect가 추천안으로 확정 산출물을 작성하며 `## 미결 항목`에 "아키텍처 옵션 미선택 — 추천안(상태 전이 세분화) 자동 채택됨" 한 줄을 남기고, 완료 처리 후 팬아웃 SendMessage(infra/session/ops) — 이 시점에야 G3 대상 게이트 판정이 시작된다(옵션 제시 시점에는 시작되지 않음)
+4. architect가 추천안으로 확정 산출물을 작성하며 `## 미결 항목`에 "아키텍처 옵션 미선택 — 추천안(상태 전이 세분화) 자동 채택됨" 한 줄을 남기고 리더에게 완료 보고를 보낸다. 이 시점에야 리더가 qa에게 체크포인트 1을 요청하고, 그 완결 뒤에 G3을 판정한다(옵션 제시 시점에는 둘 다 시작되지 않음)
 5. Phase 5 결과 요약에 "UC2: 추천안 자동 채택" 사실 표기(4번의 산출물 표기와 함께 — 문서를 직접 열어보지 않아도 알 수 있도록 이중으로 남긴다)
 
 ## 결제 도메인 참고 자료 (팀원이 필요 시 Read)
@@ -284,88 +303,64 @@ description: "신규 결제/PG 서비스 출시(런칭)를 기획부터 구축 �
 - QA 검증 매트릭스·판정 기준: `skills/qa-review/SKILL.md` (qa 팀원이 호출 — **"문서 QA"만 다룬다. 실제 구현 코드 테스트("개발 QA")는 이 하네스 범위 밖**이며 별도 코드베이스에서 진행됨을 팀원 전원이 인지)
 - 문서화 표준: 대상 프로젝트에 문서 구조 표준이 있다면 참고
 
-## 부록 A — 현행 Claude Code API 매핑 (2026-08 기준)
+## 부록 A: 현행 Claude Code API 매핑 (2026-10 기준)
 
 > 이 부록은 리서치 시점 API 기준이다. 툴 이름·파라미터가 바뀌면 **이 부록만 갱신**하고, 본문(Phase 2)의 게이트 정의는 건드리지 않는다 — 게이트는 "무엇이 언제 시작해도 되는가"라는 규범이고, 이 부록은 그 규범을 지금 이 순간의 툴로 어떻게 구현하는지 보여주는 예시일 뿐이다.
 >
 > **이 부록의 코드블록은 리더(Claude)가 내부적으로 수행하는 절차의 예시이며, 사용자가 직접 입력할 명령이 아니다.**
 
-### 1) 팀원 스폰
+### 1) 스폰 시점과 호출
 
-팀 전체를 한 번에 구성하는 전용 툴은 없다 — 개별 서브에이전트를 이름을 붙여 스폰한다. `name`은 이후 `SendMessage(to: "...")` 라우팅 키로 그대로 쓰인다.
+`name`은 이후 `SendMessage(to: "...")`의 주소입니다. `subagent_type`은 플러그인으로 설치했으면 `payments:` 접두어를 붙이고, `agents/`를 `.claude/agents/`로 복사해 쓰면 접두어 없이 쓴다. `model`은 지정하지 않아요(에이전트 정의나 세션 기본값을 따른다). 같은 시점에 띄우는 팀원은 한 메시지에 함께 호출해 병렬로 실행합니다. `{머리말}`은 `references/gate-ledger.md`의 팀 통신 머리말을 채운 블록이다.
 
-```
-Agent(name: "planner",    subagent_type: "payment-planner",            model: "opus", prompt: "{서비스 개요 + Phase 1 입력}")
-Agent(name: "compliance", subagent_type: "payment-compliance-analyst", model: "opus", prompt: "planner 완료 후 5개 규제 도메인 심층 검토를 1회 수행하고, 이후 팀 전체의 규제 질의에 상시 대기한다")
-Agent(name: "architect",  subagent_type: "payment-architect",          model: "opus", prompt: "...")
-Agent(name: "infra",      subagent_type: "payment-infra-builder",      model: "opus", prompt: "architect 완료 후 아키텍처의 네트워크 인프라 레벨(서버 사이징·이중화·존·DR)을 문서화한다")
-Agent(name: "session",    subagent_type: "payment-session-designer",   model: "opus", prompt: "...")
-Agent(name: "ops",        subagent_type: "payment-ops-designer",       model: "opus", prompt: "...")
-Agent(name: "spec",       subagent_type: "payment-spec-writer",        model: "opus", prompt: "...")
-Agent(name: "qa",         subagent_type: "payment-launch-qa",          model: "opus", prompt: "architect·infra·session·ops·spec 각 팀원이 완료될 때마다 qa-review 스킬로 경계면 교차검증을 수행한다")
-Agent(name: "adr",        subagent_type: "payment-decision-recorder",  model: "opus", prompt: "요청 기반 상시 대기, 스스로 작업을 claim하지 않는다")
-Agent(name: "reporter",   subagent_type: "payment-launch-reporter",    model: "opus", prompt: "...")
-```
-
-### 2) 작업 등록 — `TaskCreate`는 1건씩, 담당·선후관계는 `TaskUpdate`로 분리
+모든 팀원을 이름 붙여 띄운다. 어느 단계든 나중에 SendMessage로 다시 깨울 일(QA 되돌림, ADR supersede 통지, UC 회신, Phase 4 보완 요청)이 있어서, 이름 없는 단발 호출로 남길 단계가 없기 때문이다.
 
 ```
-t1  = TaskCreate({ subject: "킥오프+제약분석" })
-      TaskUpdate({ taskId: t1, owner: "planner" })
+# Phase 2 시작 (게이트 없음, 한 메시지)
+Agent(name: "adr",     subagent_type: "payments:payment-decision-recorder", prompt: "{머리말} 요청이 올 때까지 대기한다. 지금은 대기 상태로 턴을 끝낸다")
+Agent(name: "planner", subagent_type: "payments:payment-planner",           prompt: "{머리말} 입력: {service-root}/_launch-workspace/00_input/개요.md")
 
-t2  = TaskCreate({ subject: "규제 준수 심층 검토" })
-      TaskUpdate({ taskId: t2, owner: "compliance", addBlockedBy: [t1] })          # G1 구현
+# G1 열림
+Agent(name: "compliance", subagent_type: "payments:payment-compliance-analyst", prompt: "{머리말} G1 근거: {파일 2개} / planner 하류 전달 사항: {H급 제약, 확정 스코프}")
 
-t3  = TaskCreate({ subject: "컴포넌트 아키텍처 설계" })
-      TaskUpdate({ taskId: t3, owner: "architect", addBlockedBy: [t2] })           # G2 구현 — 핵심 안전장치
+# G2 열림
+Agent(name: "architect", subagent_type: "payments:payment-architect", prompt: "{머리말} G2 근거: {02번 문서} / compliance 하류 전달 사항: {H급 규제 항목}")
 
-t4  = TaskCreate({ subject: "QA: 아키텍처 정합성 검증" })
-      TaskUpdate({ taskId: t4, owner: "qa", addBlockedBy: [t3] })
+# architect 완료 보고 → 체크포인트 1 요청
+Agent(name: "qa", subagent_type: "payments:payment-launch-qa", prompt: "{머리말} 체크포인트 1 | 비교 대상: {02번 문서}, {architecture/01} | 기록: {service-root}/_launch-workspace/qa/01-아키텍처.md")
 
-t5  = TaskCreate({ subject: "인프라 설계" })
-      TaskUpdate({ taskId: t5, owner: "infra", addBlockedBy: [t4] })               # G3
-t6  = TaskCreate({ subject: "세션 시나리오 설계" })
-      TaskUpdate({ taskId: t6, owner: "session", addBlockedBy: [t4] })             # G3
-t7  = TaskCreate({ subject: "운영·정산·테스트 전략" })
-      TaskUpdate({ taskId: t7, owner: "ops", addBlockedBy: [t4] })                 # G3
+# G3 열림 (한 메시지)
+Agent(name: "infra",   subagent_type: "payments:payment-infra-builder",    prompt: "{머리말} G3 근거: qa/01-아키텍처.md / architect 하류 전달 사항: {확정 구조 요약}")
+Agent(name: "session", subagent_type: "payments:payment-session-designer", prompt: "...")
+Agent(name: "ops",     subagent_type: "payments:payment-ops-designer",     prompt: "...")
 
-t8  = TaskCreate({ subject: "QA: 인프라 정합성 검증" })
-      TaskUpdate({ taskId: t8, owner: "qa", addBlockedBy: [t5] })
-t9  = TaskCreate({ subject: "QA: 세션설계 정합성 검증" })
-      TaskUpdate({ taskId: t9, owner: "qa", addBlockedBy: [t6] })
-t10 = TaskCreate({ subject: "QA: 운영전략 정합성 검증" })
-      TaskUpdate({ taskId: t10, owner: "qa", addBlockedBy: [t7] })
+# infra, session, ops, spec 완료 보고 → 체크포인트 2~5 요청
+SendMessage(to: "qa", message: "체크포인트 {N} | 비교 대상: {경로} | 기록: {qa/{NN}-*.md} | 완료된 생산자: {이름 목록}")
 
-t11 = TaskCreate({ subject: "인터페이스·API 스펙" })
-      TaskUpdate({ taskId: t11, owner: "spec", addBlockedBy: [t9] })               # G4
+# G4 열림
+Agent(name: "spec", subagent_type: "payments:payment-spec-writer", prompt: "{머리말} G4 근거: qa/03-세션설계.md")
 
-t12 = TaskCreate({ subject: "QA: 스펙 정합성 검증" })
-      TaskUpdate({ taskId: t12, owner: "qa", addBlockedBy: [t11] })
-
-t13 = TaskCreate({ subject: "구축 보고서 종합" })
-      TaskUpdate({ taskId: t13, owner: "reporter", addBlockedBy: [t8, t10, t12] })  # G5
+# G5 열림
+Agent(name: "reporter", subagent_type: "payments:payment-launch-reporter", prompt: "{머리말} G5 근거: qa/02, qa/04, qa/05 / 입력: {service-root}/_launch-workspace/gates.md, {service-root}/_launch-workspace/qa/")
 ```
 
-| # | subject | owner | addBlockedBy | 구현 게이트 |
-|---|---------|-------|--------------|------------|
-| t1 | 킥오프+제약분석 | planner | — | — |
-| t2 | 규제 준수 심층 검토 | compliance | t1 | G1 |
-| t3 | 컴포넌트 아키텍처 설계 | architect | t2 | **G2** |
-| t4 | QA: 아키텍처 정합성 검증 | qa | t3 | — |
-| t5 | 인프라 설계 | infra | t4 | G3 |
-| t6 | 세션 시나리오 설계 | session | t4 | G3 |
-| t7 | 운영·정산·테스트 전략 | ops | t4 | G3 |
-| t8 | QA: 인프라 정합성 검증 | qa | t5 | — |
-| t9 | QA: 세션설계 정합성 검증 | qa | t6 | — |
-| t10 | QA: 운영전략 정합성 검증 | qa | t7 | — |
-| t11 | 인터페이스·API 스펙 | spec | t9 | G4 |
-| t12 | QA: 스펙 정합성 검증 | qa | t11 | — |
-| t13 | 구축 보고서 종합 | reporter | t8, t10, t12 | G5 |
+스킬은 `Skill` 도구로 호출한다(`payments:qa-review`, `payments:compliance-review`, 복사 설치면 접두어 없이).
 
-`adr`과 `compliance`(t2 완료 이후)는 고정 작업을 받지 않는다 — 팀원 누구든 `SendMessage(to: "adr"|"compliance", ...)`로 요청할 때만 반응한다.
+### 2) 게이트 판정
 
-### 3) 진행률 확인·종료
+리더는 근거를 직접 확인한 뒤 `gates.md`에 줄을 덧붙인다. 팀원의 보고는 판정을 시작하는 신호일 뿐 근거가 아니에요.
 
-- `TaskList`로 팀원이 claim 가능한(의존성이 풀린) 작업 확인, `TaskGet`으로 특정 작업 상세 확인
-- FIX/GAP 재검증 루프처럼 게이트 그래프에 없는 왕복은 `SendMessage`로만 이뤄지며, `TaskUpdate(status: "completed")`는 그 왕복이 끝난 뒤에 호출한다 — 재검증 미완결 상태에서 QA 작업을 먼저 `completed`로 표시하지 않는다
-- 팀 종료 시 전용 삭제 툴이 없으면, 팀원 전원에게 종료 SendMessage를 보내고 남은 작업은 `TaskUpdate(status: "completed")`로 마감하는 것으로 갈음한다
+| 게이트 | 확인 방법 |
+|--------|----------|
+| G1 | Glob으로 `docs/kickoff/01-*.md`, `docs/constraints/01-{service-slug}-제약-분석.md` 존재 확인 |
+| G2 | Grep으로 `docs/constraints/02-{service-slug}-규제-준수-체크리스트.md`에서 `## 법무 확인 필요 목록` 확인 |
+| G3 | qa의 `QA C1:` 보고 + `qa/01-*.md` 마지막 판정에 FIX, GAP, `보류(비교 상대 미완료)`가 없음 |
+| G4 | qa의 `QA C3:` 보고 + `qa/03-*.md` 같은 기준 |
+| G5 | `qa/02-*.md`, `qa/04-*.md`, `qa/05-*.md` 같은 기준. "미수행(대상 부재)"도 완결로 친다 |
+
+### 3) 진행 확인과 종료
+
+- 진행 상태: `gates.md`(스폰은 있는데 `완료:`가 없으면 진행 중)와 `ListAgents`(실행 중인지 유휴인지)를 함께 본다
+- 상태 확인과 재지시: `SendMessage(to: "{이름}")`. 끝난 팀원도 이름으로 깨어나 자기 맥락에서 이어간다
+- 재시작: SendMessage로 깨우는 것이 먼저다. 깨워도 응답이 없을 때만 같은 이름으로 다시 스폰하고(이후 메시지는 새 에이전트로 간다), 프롬프트에 자기 산출물과 기록 파일 경로를 넣어 상태를 복원하게 한다
+- 멈춤: 실행 중인 팀원을 멈출 때만 `TaskStop`을 쓴다

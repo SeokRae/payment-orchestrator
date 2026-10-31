@@ -1,7 +1,7 @@
 # payment-launch-orchestrator
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Plugin version](https://img.shields.io/badge/plugin-1.0.0-informational.svg)](.claude-plugin/plugin.json)
+[![Plugin version](https://img.shields.io/badge/plugin-1.1.0-informational.svg)](.claude-plugin/plugin.json)
 
 > 신규 결제/PG(Payment Gateway, 결제대행사) 서비스 출시를 기획부터 구축 보고서까지, **10명의 AI 에이전트**가 팀으로 자동화하는 [Claude Code](https://claude.com/claude-code) 하네스입니다.
 
@@ -77,7 +77,7 @@ flowchart TD
 
 | 스킬 | 트리거 문구 예시 | 역할 |
 |---|---|---|
-| [`launch-orchestrator`](skills/launch-orchestrator/SKILL.md) | "신규 결제 서비스 출시", "PG 서비스 구축 하네스" | 팀 전체를 조율하는 메인 스킬 — 10명 스폰, 착수 게이트 G1~G5 관리, 부분 재실행(특정 팀원만 재작업) 처리 |
+| [`launch-orchestrator`](skills/launch-orchestrator/SKILL.md) | "신규 결제 서비스 출시", "PG 서비스 구축 하네스" | 팀 전체를 조율하는 메인 스킬. 착수 게이트 G1~G5가 열릴 때마다 해당 팀원을 스폰하고 `gates.md`에 판정을 남기며, 부분 재실행(특정 팀원만 재작업)도 처리 |
 | [`compliance-review`](skills/compliance-review/SKILL.md) | "규제 검토", "PG 등록 대상인지 확인", "PCI-DSS 대응해야 하나" | 전자금융거래법(국내 PG·전자결제 등록/인허가 근거법) 등록/인허가·PCI-DSS(카드 데이터 보안 국제표준)·개인정보보호법(국외이전)·특정금융정보법(특금법, AML/가상자산사업자(VASP) 규제)·해외 PSP(결제서비스제공자) 연동(외국환거래법·GDPR) 5개 규제 도메인 체크리스트로 H/M/L 등급 판정. `references/regulatory-checklist.md`에 77개 항목이 확인 상태(✅/⚠️/❓)와 함께 정리돼 있습니다. **법률 자문이 아닙니다.** |
 | [`qa-review`](skills/qa-review/SKILL.md) | "설계 문서 정합성 검증", "이 문서들 앞뒤가 맞나 확인", "QA 해줘" | 설계 문서 간 경계면 교차검증(PASS/FIX/GAP 판정). **"문서 QA"만 다룹니다** — 실제 구현 코드가 스펙대로 동작하는지 확인하는 "개발 QA"는 범위 밖입니다([설계 범위](#설계-범위--문서-qa와-개발-qa) 참조). |
 
@@ -109,6 +109,8 @@ flowchart TD
 ## 전제 조건
 
 이 하네스는 문서를 어디에 둘지 **특정 폴더 구조를 강제하지 않습니다.** 오케스트레이터 Phase 0가 실행 시점에 `{service-root}`(문서 루트 경로)를 프로젝트에 이미 있는 컨벤션에서 찾거나, 없으면 사용자에게 직접 물어서 정합니다.
+
+**실행 환경**: Claude Code 세션에 `Agent` 도구(`name` 파라미터)와 `SendMessage`가 있어야 합니다. 작업 목록 도구(`TaskCreate` 등)는 필요 없어요. 리더가 게이트를 직접 판정하고 그 시점에 팀원을 스폰하며, 판정 이력은 `{service-root}/_launch-workspace/gates.md`에 남습니다.
 
 **외부 플러그인·노트 앱에 전혀 의존하지 않습니다.** Obsidian이 설치돼 있을 필요도, 다른 노트 도구가 있을 필요도 없습니다 — 문서 구조는 `docs/{kickoff,constraints,architecture,session-design,operations,specs,adr,reports}/` 표준 폴더와 각 문서 최상단의 `# 제목` 헤더, 표준 마크다운만으로 하네스 자체가 자기완결적으로 구성합니다. 특수 프론트매터 필드나 wiki-link(`[[...]]`) 문법도 쓰지 않습니다 — 일반 마크다운 뷰어·에디터 어디서나 그대로 읽힙니다. `reporter`가 마지막에 쓰는 구축 보고서(`docs/reports/{service-slug}-플랫폼-구축-보고서.md`)가 전체 산출물로 가는 단일 진입점(목차) 역할을 합니다.
 
@@ -216,7 +218,7 @@ flowchart TD
 <details>
 <summary><strong>8. <a href="agents/payment-launch-qa.md"><code>payment-launch-qa</code></a> — 설계 문서 정합성 검증</strong></summary>
 
-- **착수 조건**: 게이트 없음 — architect·infra·session·ops·spec 각 완료 직후 자동 트리거(5개 체크포인트)
+- **착수 조건**: 게이트 없음. architect, infra, session, ops, spec이 완료 보고를 보내면 리더가 해당 체크포인트를 요청한다(5개 체크포인트)
 - **핵심 역할**: `qa-review` 스킬로 경계면 교차검증 수행, PASS/FIX/GAP 판정
 - **핵심 원칙**: "존재 확인"이 아니라 "교차 비교", 재검증은 무진행(그 항목에 이미 나온 적 있는 지적이 다시 등장 — 직전 라운드가 아니어도 해당 — 또는 체크포인트 전체가 2라운드 연속 정체) 감지 시 강제 PASS, REDO급 불일치는 판정 없이 즉시 리더 에스컬레이션
 - **입력 → 출력**: 인접 문서 쌍 → `_launch-workspace/qa/{NN}-*.md`(`docs/`에는 쓰지 않음 — 감사 기록)
