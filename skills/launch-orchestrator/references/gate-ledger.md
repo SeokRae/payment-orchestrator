@@ -1,6 +1,6 @@
 # 게이트 기록과 스폰 머리말
 
-`launch-orchestrator` 리더가 쓰는 서식 두 가지입니다. 게이트 규범은 SKILL.md의 Phase 2에, 호출 예시는 부록 A에 있고, 이 파일은 서식만 담습니다.
+`launch-orchestrator` 리더가 쓰는 서식 두 가지와, 작업 목록 도구를 쓰지 않는 근거를 담습니다. 게이트 규범은 SKILL.md의 Phase 2에, 호출 예시는 부록 A에 있어요.
 
 ## 1. 게이트 기록: `{service-root}/_launch-workspace/gates.md`
 
@@ -60,3 +60,15 @@
   - 변경 통지 (→ qa): 변경 통지 C{N}: {바뀐 파일}:{절} | 사유: {한 줄}
   - QA 보고 (qa → main): QA C{N}: PASS 또는 강제 PASS 또는 미수행(대상 부재) 또는 무효화 | 기록: {경로}
 ```
+
+
+## 3. 작업 목록 도구 노출 조건
+
+SKILL.md "전제 도구"가 작업 목록 도구를 게이트에 쓰지 않는 근거입니다.
+
+- Claude Code v2.1.268 이후 기본값으로는 `TaskCreate`, `TaskGet`, `TaskUpdate`, `TaskList`, `TodoWrite`가 Opus 4.7, Sonnet 4.6, Haiku 4.5 이하 모델에만 들어갑니다
+- 그 밖의 모델(Opus 4.8, Sonnet 5, Fable 5, Mythos 5 계열 이후 등)은 다음 중 하나로 켜야 해요: `CLAUDE_CODE_ENABLE_TODO_TOOLS=1`, `--allowedTools`에 도구 이름 지정, `--tools`에 나열, Agent SDK의 `allowedTools`나 `tools` 옵션
+- 백그라운드 세션과 클라우드 세션은 모델과 무관하게 이 도구를 제공합니다. 같은 플러그인을 클라우드에서 돌리면 도구가 보일 수 있다는 뜻이고, 그래서 "보여도 게이트 판정에는 쓰지 않는다"를 규칙으로 둡니다
+- 서브에이전트는 부모 세션에 도구가 있을 때만 받습니다. 서브에이전트가 어떤 모델로 돌든 같아요
+- 에이전트 팀 실험 플래그는 켜는 방법에 들어 있지 않습니다. 2026-10-31 세션에서도 플래그를 켠 상태로 도구가 없었어요
+- 출처: https://code.claude.com/docs/en/tools-reference ("Task tool availability" 절), https://code.claude.com/docs/en/whats-new/2026-w33 (Opus 4.8, Sonnet 5, Fable 5, Mythos 5 이후 계열에서 빠졌고 `CLAUDE_CODE_ENABLE_TODO_TOOLS=1`로 다시 켠다는 공지)
