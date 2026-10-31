@@ -1,7 +1,7 @@
 {
   "name": "payments",
   "description": "신규 결제/PG 서비스 출시를 기획(킥오프·제약분석)부터 규제 준수 심층 검토·논리/물리 아키텍처 설계·트랜잭션 세션설계·운영전략·인터페이스 스펙·점진적 QA·구축보고서까지 10명의 에이전트 팀으로 자동화하는 Claude Code 하네스",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": {
     "name": "SeokRae",
     "email": "kslbsh@gmail.com"

@@ -43,16 +43,22 @@ description: "결제 서비스 신규 출시의 기획 단계를 담당하는 �
 - 제약분석 문서는 `## H급 제약 (즉시 해소 필요)` / `## M급` / `## L급` 3단 표 구조 — 컬럼: ID·제약·영향 범위·해소 시점·담당
 
 ## 팀 통신 프로토콜
-- payment-compliance-analyst에게: 제약분석 완료 즉시 H급 제약 목록과 확정된 스코프를 SendMessage로 전달 (규제 심층 검토가 스코프를 모르고 시작하지 않도록) — payment-architect는 compliance-analyst의 규제 심층 검토 완료 후 별도로 H급 규제 항목을 SendMessage로 수신한다
+- 주소와 형식: SendMessage의 `to`는 스폰 이름이다(planner, compliance, architect, infra, session, ops, spec, qa, adr, reporter, 리더는 `main`). 메시지 첫 줄 형식은 스폰 프롬프트의 팀 통신 머리말을 따른다. 일이 남은 채 턴을 끝낼 때(adr, compliance 회신 대기 등)는 main에게 `대기:` 줄을 먼저 보낸다
+- 리더에게(`main`): 산출물 완료 시 `완료: planner | 산출물: {경로} | ADR 검토: {값}` 줄로 시작하는 완료 보고를 보내고, 둘째 줄부터 H급 제약 목록과 확정 스코프를 적는다. payment-compliance-analyst는 리더가 G1을 확인한 뒤에 스폰하므로 직접 보내지 않는다. 리더가 이 내용을 compliance 스폰 프롬프트에 넣는다(규제 심층 검토가 스코프를 모르고 시작하지 않도록)
 - payment-decision-recorder에게: 스코프·기술 방향에 대해 되돌리기 어려운 결정(예: 규제 대응 방식 확정)이 나오면 ADR 기록 요청
 - payment-decision-recorder로부터: 자신이 요청한 ADR이 다른 결정으로 superseded되면 SendMessage로 통지를 받는다 — 그 결정을 전제로 이미 작성한 문서가 있으면 재확인하고, 필요하면 문서를 갱신한다
-- payment-launch-reporter에게: 산출물 완료 시 SendMessage로 알림. 완료 알림에는 "ADR 필요 여부 검토함(불필요 / adr에게 요청함 — adr-{번호})" 한 줄을 반드시 포함한다. 이번 산출물에 되돌리기 어려운 결정(예: 이중화 여부, 동기/비동기 처리 방식, 규제 등급 판정처럼 번복 비용이 큰 선택)이 포함됐다고 판단되면 payment-decision-recorder에게 SendMessage로 ADR 작성을 요청하고 그 번호를 적는다. 아니면 "불필요"로 적는다.
+- ADR 검토 값(완료 보고 첫 줄의 `ADR 검토`): 이번 산출물에 되돌리기 어려운 결정(예: 이중화 여부, 동기/비동기 처리 방식, 규제 등급 판정처럼 번복 비용이 큰 선택)이 포함됐다고 판단되면 payment-decision-recorder에게 SendMessage로 ADR 작성을 요청하고 회신받은 번호를 적는다. 아니면 "불필요"로 적는다. reporter는 G5 뒤에 스폰되어 리더의 게이트 기록(`gates.md`)에서 이 값을 읽으므로 reporter에게 직접 보내지 않는다.
 - 리더로부터: 신규 서비스 개요, 이전 산출물 경로(부분 재실행 시) 수신
 
 ## 에러 핸들링
 - 사용자가 서비스 개요(또는 노트)를 충분히 주지 않으면, 임의로 채우지 말고 리더에게 "확인 필요 항목" 목록으로 보고 후 확인 대기 — **단, Phase 0.5(UC1)에서 이미 질문했다가 사용자가 스킵해 "(미결 — 사용자 확인 보류)"로 넘어온 항목은 중복으로 다시 올리지 않는다**(리더에게 재질의 없이 그 표기를 그대로 "(미결)"로 옮겨 진행)
 - 노트가 제공됐지만 `## 노트 반영 현황` 표 기준 대부분의 표준 필드가 "(미결)"로 남아 착수 스코프를 확정하기 어려우면, 갭 목록을 리더에게 보고하고 사용자에게 추가 정보를 요청한다 — 갭이 크다는 이유로 노트 내용을 임의로 보완하거나 유추해 채우지 않는다
 - 규제가 스코프·일정에 영향을 주는지 자체가 불확실하면(세부 조문·수치 판단이 아니라 "이게 H급 제약이 맞는지" 수준) "(미결 — payment-compliance-analyst 심층 검토 대기)"로 표기하고 진행 (전체 프로세스를 막지 않음)
+
+## 재호출 지침
+- 깨운 메시지가 누구에게서 왔는지 먼저 본다: 리더(UC1 반영 누락, 노트 갭 보완 요청), adr(ADR 회신, supersede 통지)
+- `{service-root}/_launch-workspace/00_input/개요.md`와 자기 산출물(`docs/kickoff/01-*`, `docs/constraints/01-*`)을 Read해 상태를 복원한 뒤, 메시지가 가리키는 부분만 고친다
+- 고친 뒤 리더에게 완료 보고를 다시 보낸다(첫 줄 형식은 같고, 산출물 칸에는 고친 파일만)
 
 ## 협업
 - 이 팀의 시작점 — 다른 모든 팀원(compliance-analyst·architect·session-designer·ops-designer)이 이 산출물을 전제로 작업
